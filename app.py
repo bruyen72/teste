@@ -589,7 +589,7 @@ if __name__ == '__main__':
             print("Sistema inicializado com sucesso!")
 
             # ---- Ajuste para Railway: ler variável PORT e usar host 0.0.0.0 ----
-            port = int(os.environ.get("PORT", 5000))
+            port = int(os.environ.get("PORT", 8000))
             app.run(debug=True, host="0.0.0.0", port=port)
 
         except Exception as e:
