@@ -588,9 +588,10 @@ if __name__ == '__main__':
             
             print("Sistema inicializado com sucesso!")
 
-            # ---- Ajuste para Fly.io: Configura a porta e host ----
-            port = int(os.environ.get("PORT", 8080))  # Fly.io usa a porta 8080 por padrão
+            # ---- Ajuste para configuração de porta (mantendo padrão em 5000 para local) ----
+            port = int(os.environ.get('PORT', 5000))  # Usa 5000 como padrão para ambiente local
             app.run(debug=False, host="0.0.0.0", port=port)  # Configura para aceitar conexões externas
 
         except Exception as e:
             print(f"Erro na inicialização: {e}")
+
