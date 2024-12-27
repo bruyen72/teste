@@ -17,22 +17,25 @@ from email.utils import formataddr
 from email.utils import formatdate
 
 
-app = Flask(__name__,
+app = Flask(
+    __name__,
     static_folder='static',
-    static_url_path=''  # Alterado para URL raiz
+    static_url_path=''  # URL raiz para arquivos estáticos
 )
 
-# Depois as outras configurações
-# Garanta que o UPLOAD_FOLDER existe e tem permissões corretas
+# Configuração do diretório de uploads
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
+
+# Cria a pasta de uploads se ela não existir
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Configurações do Flask e SQLAlchemy
 app.config.update(
-    SECRET_KEY=os.environ.get('SECRET_KEY', os.urandom(24)),
-    SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///tecpoint.db'),
-    SQLALCHEMY_TRACK_MODIFICATIONS=False,
-    UPLOAD_FOLDER=UPLOAD_FOLDER,
-    MAX_CONTENT_LENGTH=50 * 1024 * 1024
+    SECRET_KEY=os.environ.get('SECRET_KEY', os.urandom(24)),  # Chave secreta para sessões
+    SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///tecpoint.db'),  # Banco de dados
+    SQLALCHEMY_TRACK_MODIFICATIONS=False,  # Desabilita notificações de modificação
+    UPLOAD_FOLDER=UPLOAD_FOLDER,  # Define o diretório de uploads
+    MAX_CONTENT_LENGTH=50 * 1024 * 1024  # Limite de tamanho do upload (50 MB)
 )
 # Ajuste o DATABASE_URL para PostgreSQL
 if 'DATABASE_URL' in os.environ:
@@ -578,9 +581,13 @@ Enviado através do formulário (rota /enviar-contato)
 if __name__ == '__main__':
     with app.app_context():
         try:
+            # Inicializa o banco de dados e garante que todas as tabelas sejam criadas
+            print("Inicializando o banco de dados...")
             db.create_all()
-            
-            # Cria admin padrão
+            print("Tabelas criadas com sucesso!")
+
+            # Cria admin padrão, caso não exista
+            print("Verificando existência do admin padrão...")
             if not Admin.query.filter_by(username='admin').first():
                 admin = Admin(
                     username='admin',
@@ -588,8 +595,14 @@ if __name__ == '__main__':
                 )
                 db.session.add(admin)
                 db.session.commit()
-            
-            port = int(os.environ.get('PORT', 8080))
+                print("Admin padrão criado com sucesso!")
+            else:
+                print("Admin padrão já existe.")
+
+            # Configura a porta e inicia o servidor
+            port = int(os.environ.get('PORT', 8080))  # Padrão para Fly.io
+            print(f"Iniciando o servidor na porta {port}...")
             app.run(host='0.0.0.0', port=port)
         except Exception as e:
-            print(f"Erro: {e}")
+            # Tratamento genérico de erro
+            print(f"Erro ao inicializar a aplicação: {e}")
