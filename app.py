@@ -17,15 +17,14 @@ from email.utils import formataddr
 from email.utils import formatdate
 
 
-app = Flask(__name__, 
+app = Flask(__name__,
     static_folder='static',
-    static_url_path='/static'
+    static_url_path=''  # Alterado para URL raiz
 )
 
 # Depois as outras configurações
-basedir = os.path.abspath(os.path.dirname(__file__))
-UPLOAD_FOLDER = os.path.join(basedir, 'static', 'uploads')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# Garanta que o UPLOAD_FOLDER existe e tem permissões corretas
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config.update(
@@ -35,6 +34,12 @@ app.config.update(
     UPLOAD_FOLDER=UPLOAD_FOLDER,
     MAX_CONTENT_LENGTH=50 * 1024 * 1024
 )
+# Ajuste o DATABASE_URL para PostgreSQL
+if 'DATABASE_URL' in os.environ:
+    database_url = os.environ['DATABASE_URL']
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://")
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 
 # Configurações de Email
 SMTP_SERVER = 'smtps.uhserver.com'
@@ -573,13 +578,9 @@ Enviado através do formulário (rota /enviar-contato)
 if __name__ == '__main__':
     with app.app_context():
         try:
-            # Garante que o diretório de uploads existe
-            ensure_upload_dir()
-            
-            # Inicializa o banco de dados
             db.create_all()
             
-            # Cria admin padrão se não existir
+            # Cria admin padrão
             if not Admin.query.filter_by(username='admin').first():
                 admin = Admin(
                     username='admin',
@@ -587,18 +588,8 @@ if __name__ == '__main__':
                 )
                 db.session.add(admin)
                 db.session.commit()
-                print("Admin padrão criado com sucesso!")
             
-            print("Sistema inicializado com sucesso!")
-            
-            # Configuração para Fly.io e desenvolvimento
-            if os.environ.get('FLY_APP_NAME'):
-                # Produção no Fly.io
-                port = int(os.environ.get('PORT', 8080))
-                app.run(host='0.0.0.0', port=port, debug=False)
-            else:
-                # Desenvolvimento local
-                app.run(host='localhost', port=5000, debug=True)
-
+            port = int(os.environ.get('PORT', 8080))
+            app.run(host='0.0.0.0', port=port)
         except Exception as e:
-            print(f"Erro na inicialização: {e}")
+            print(f"Erro: {e}")
