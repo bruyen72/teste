@@ -17,21 +17,23 @@ from email.utils import formataddr
 from email.utils import formatdate
 
 
-app = Flask(__name__, static_folder='static')  # Adicione esta linha
+app = Flask(__name__, 
+    static_folder='static',
+    static_url_path='/static'
+)
 
+# Depois as outras configurações
 basedir = os.path.abspath(os.path.dirname(__file__))
 UPLOAD_FOLDER = os.path.join(basedir, 'static', 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Configurações do app
 app.config.update(
     SECRET_KEY=os.environ.get('SECRET_KEY', os.urandom(24)),
     SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///tecpoint.db'),
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     UPLOAD_FOLDER=UPLOAD_FOLDER,
-    MAX_CONTENT_LENGTH=50 * 1024 * 1024,  # 50MB max-limit
-    STATIC_FOLDER='static'  # Adicione esta linha
+    MAX_CONTENT_LENGTH=50 * 1024 * 1024
 )
 
 # Configurações de Email
