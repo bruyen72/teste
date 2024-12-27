@@ -1,21 +1,23 @@
+# Use uma imagem Python base
 FROM python:3.12-slim
 
-# Instalar dependências do sistema
+# Instale dependências do sistema
 RUN apt-get update && apt-get install -y \
     build-essential \
+    libpq-dev \
     && apt-get clean
 
-# Criar diretório de trabalho
+# Configure o diretório de trabalho
 WORKDIR /app
 
-# Copiar os arquivos necessários
+# Copie o arquivo de dependências
 COPY requirements.txt .
 
-# Instalar dependências do Python
+# Instale as dependências
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar o restante do projeto
+# Copie o código do projeto
 COPY . .
 
-# Comando para iniciar o aplicativo
+# Defina o comando padrão para rodar o app
 CMD ["python", "app.py"]
