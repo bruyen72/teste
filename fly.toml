@@ -2,12 +2,7 @@ app = "tecpoint"
 primary_region = "gru"
 
 [build]
-  builder = "paketobuildpacks/builder:base"
-
-[env]
-  PORT = "8080"
-  FLASK_APP = "app.py"
-  FLASK_ENV = "production"
+  dockerfile = "Dockerfile"
 
 [http_service]
   internal_port = 8080
