@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário de Contato</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+</head>
+<body>
+    <section id="contato" class="contact">
+        <div class="section-header">
+            <h2>Entre em Contato</h2>
+            <p>Estamos prontos para atender você</p>
+        </div>
+        <div class="contact-container">
+            <div class="contact-form">
+                <h2>Envie sua Mensagem</h2>
+                <form id="contactForm">
+                    <div class="form-group">
+                        <input type="text" name="nome" placeholder="Seu Nome" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="email" name="email" placeholder="Seu Email" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="tel" name="telefone" placeholder="Seu Telefone">
+                    </div>
+                    <div class="form-group">
+                        <textarea name="mensagem" rows="4" placeholder="Sua Mensagem" required></textarea>
+                    </div>
+                    <button type="submit" class="button">Enviar Mensagem</button>
+                </form>
+            </div>
+        </div>
+        <div id="responseMessage"></div>
+    </section>
+</body>
+</html>

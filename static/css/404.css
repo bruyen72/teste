@@ -1,0 +1,134 @@
+ /* Usando as mesmas variáveis do site principal */
+ :root {
+    --primary: #00A859;
+    --secondary: #00C853;
+    --accent: #00E676;
+    --dark: #1C1C1C;
+    --darker: #0A0A0A;
+    --light: #FFFFFF;
+    --gray: #E8F5E9;
+    --text-dark: #222222;
+    --text-light: #FFFFFF;
+    --text-gray: #666666;
+    --gradient: linear-gradient(135deg, var(--primary), var(--accent));
+    --neon-glow: 0 0 20px rgba(0, 168, 89, 0.3);
+    --shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    --hover-bg: rgba(0, 168, 89, 0.1);
+    --border-color: rgba(0, 168, 89, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    color: var(--text-dark);
+    background: var(--light);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header igual ao original */
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 168, 89, 0.1);
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+}
+
+.logo img {
+    height: 86px;
+    width: auto;
+}
+
+/* Conteúdo do Erro */
+.error-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    margin-top: 86px;
+    text-align: center;
+}
+
+.error-content {
+    max-width: 600px;
+}
+
+.error-title {
+    font-size: 8rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+    line-height: 1;
+}
+
+.error-message {
+    font-size: 1.5rem;
+    color: var(--text-dark);
+    margin-bottom: 2rem;
+}
+
+.error-description {
+    color: var(--text-gray);
+    margin-bottom: 2rem;
+}
+
+/* Botão */
+.button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.button-primary {
+    background: var(--gradient);
+    color: white;
+}
+
+.button:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--neon-glow);
+}
+
+/* Footer */
+.footer {
+    background: white;
+    padding: 2rem;
+    text-align: center;
+    border-top: 1px solid rgba(0, 168, 89, 0.1);
+}
+
+.footer p {
+    color: var(--text-gray);
+}

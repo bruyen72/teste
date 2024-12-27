@@ -1,0 +1,8 @@
+Acesse:
+
+
+Site: http://localhost:5000/
+Admin: http://localhost:5000/admin do trabalho funcionalidade e atualizacao e adiciona 
+
+Usuário: admin
+Senha: admin123

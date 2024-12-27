@@ -1,0 +1,718 @@
+:root {
+    /* Cores principais */
+    --primary: #00A859;
+    --secondary: #00C853;
+    --accent: #00E676;
+
+    /* Cores de fundo */
+    --dark: #1C1C1C;
+    --darker: #0A0A0A;
+    --light: #FFFFFF;
+    --gray: #E8F5E9;
+
+    /* Cores de texto */
+    --text-dark: #222222;
+    --text-light: #FFFFFF;
+    --text-gray: #666666;
+
+    /* Efeitos e gradientes */
+    --gradient: linear-gradient(135deg, var(--primary), var(--accent));
+    --neon-glow: 0 0 20px rgba(0, 168, 89, 0.3);
+    --shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+
+    /* Cores de interação */
+    --hover-bg: rgba(0, 168, 89, 0.1);
+    --border-color: rgba(0, 168, 89, 0.1);
+    --input-bg: rgba(0, 0, 0, 0.5);
+
+    /* PARCEIRO WING */
+    --logo-min-width: 10mm;
+    --logo-protection-area: 20%;
+    --partner-logo-scale: 0.6;
+    --logo-spacing: 1rem;
+    --max-logo-height: 86px;
+    --partner-offset: 271px;
+    /* Nova variável para controle do posicionamento */
+}
+
+.partner-logos {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-right: calc(var(--partner-offset) / 2);
+    /* Espaço para o logo parceiro */
+}
+
+.partner-logo {
+    height: calc(var(--max-logo-height) * var(--partner-logo-scale));
+    width: auto;
+    min-width: var(--logo-min-width);
+    position: absolute;
+    left: var(--partner-offset);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    color: var(--light);
+    background: var(--darker);
+    overflow-x: hidden;
+}
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+    height: -20px;
+}
+
+.partner-logos img {
+    height: calc(var(--max-logo-height)*var(--partner-logo-scale));
+    width: auto;
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+}
+
+.logo img {
+    height: 86px;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-link {
+    color: black;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    transition: all 0.3s;
+    position: relative;
+    font-weight: 500;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 1rem;
+    right: 1rem;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+}
+
+.nav-link:hover {
+    color: var(--accent);
+    background: var(--hover-bg);
+}
+
+.nav-link:hover::after {
+    transform: scaleX(1);
+}
+
+.mobile-toggle {
+    display: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: black;
+    /* Garantindo a cor preta do ícone */
+}
+
+.hero {
+    min-height: 100vh;
+    padding-top: 80px;
+    display: flex;
+    align-items: center;
+    background: var(--gradient);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--darker);
+    opacity: 0.8;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+}
+
+.hero-text h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+    color: var(--light);
+    font-weight: bold;
+}
+
+.hero-text p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+    color: var(--accent);
+}
+
+.button {
+    display: inline-block;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+}
+
+.button-primary {
+    background: var(--gradient);
+    color: black;
+    box-shadow: 0 7px 15px rgba(0, 0, 0, 0.3);
+}
+
+.button-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.radio-container {
+    position: relative;
+    width: 100%;
+    height: 900px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    pointer-events: none;
+    cursor: default;
+}
+
+.radio {
+    position: absolute;
+    width: 250px;
+    height: auto;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+}
+
+.radio img {
+    width: 65%;
+    height: auto;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    background-size: contain;
+    margin: 0;
+    padding: 0;
+}
+
+.radio-1 {
+    left: 15%;
+    top: 50%;
+    transform: translateY(-50%);
+    animation: floatRadio1 6s ease-in-out infinite;
+    z-index: 2;
+}
+
+.radio-2 {
+    right: 15%;
+    top: 50%;
+    transform: translateY(-0%);
+    animation: floatRadio2 6s ease-in-out infinite;
+    z-index: 1;
+}
+
+@keyframes floatRadio1 {
+
+    0%,
+    100% {
+        transform: translateY(-70%) rotate(-8deg) scale(1);
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+    }
+
+    50% {
+        transform: translateY(-60%) rotate(-8deg) scale(1.05);
+        filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4));
+    }
+}
+
+@keyframes floatRadio2 {
+
+    0%,
+    100% {
+        transform: translateY(-90%) rotate(14deg) scale(1);
+        filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+    }
+
+    50% {
+        transform: translateY(-100%) rotate(14deg) scale(1.05);
+        filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.4));
+    }
+}
+
+.instagram-section {
+    padding: 6rem 2rem;
+    background: var(--darker);
+    position: relative;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    position: relative;
+}
+
+.section-header h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--light);
+    display: inline-block;
+    position: relative;
+}
+
+.section-header h2::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    width: 60px;
+    height: 3px;
+    background: var(--gradient);
+    transform: translateX(-50%);
+    border-radius: 2px;
+}
+
+.section-header p {
+    color: var(--accent);
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.instagram-feed {
+    max-width: 999px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.instagram-feed iframe {
+    width: 100% !important;
+    min-height: 650px;
+    border: none;
+    margin: 0 !important;
+}
+
+.products {
+    padding: 6rem 2rem;
+    background: linear-gradient(to bottom, var(--dark), var(--darker));
+    position: relative;
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.product-card {
+    background: linear-gradient(145deg, var(--primary), var(--accent));
+    border-radius: 15px;
+    overflow: hidden;
+    padding: 2rem;
+    transition: all 0.3s;
+    border: 1px solid rgba(3, 150, 69, 0.1);
+    position: relative;
+    color: rgb(0, 0, 0);
+}
+
+.product-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 168, 89, 0.2);
+}
+
+.contact {
+    padding: 6rem 2rem;
+    background: var(--darker);
+}
+
+.contact-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+}
+
+.contact-form {
+    background: rgba(0, 168, 89, 0.05);
+    padding: 2rem;
+    border-radius: 15px;
+    border: 1px solid rgba(0, 168, 89, 0.1);
+}
+
+.contact-info {
+    padding: 2rem;
+}
+
+.contact-info h2,
+.contact-form h2 {
+    color: var(--light);
+    margin-bottom: 2rem;
+    font-size: 2rem;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-item i {
+    color: var(--accent);
+    font-size: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0, 168, 89, 0.2);
+    border-radius: 8px;
+    color: var(--light);
+    transition: 0.3s;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(0, 168, 89, 0.2);
+}
+
+.footer {
+    background: white;
+    padding: 4rem 2rem 2rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 3rem;
+    margin-bottom: 2rem;
+}
+
+.footer-logo {
+    height: 100px;
+    margin-bottom: 1rem;
+    height: var(--max-logo-height, 160px);
+    width: auto;
+    min-width: var(--logo-min-width, 20mm);
+}
+
+.footer-tecpoint-logo {
+    margin-bottom: 1rem;
+}
+
+.footer-tecpoint-logo img {
+    height: var(--max-logo-height, 160px);
+    width: auto;
+    min-width: var(--logo-min-width, 20mm);
+}
+
+.footer-wings-logo {
+    margin-bottom: 1rem;
+    margin-left: 0;
+}
+
+.footer-wings-logo img {
+    height: calc(var(--max-logo-height)*var(--partner-logo-scale));
+    width: auto;
+}
+
+.footer-section h3 {
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+}
+
+.footer-section p {
+    color: black;
+    margin-bottom: 1rem;
+}
+
+.footer-section ul {
+    list-style: none;
+}
+
+.footer-section ul li {
+    margin-bottom: 0.5rem;
+}
+
+.footer-section ul li a {
+    color: black;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.footer-section ul li a:hover {
+    color: var(--accent);
+}
+
+.social-links {
+    display: flex;
+    gap: 1rem;
+}
+
+.social-links a {
+    color: black;
+    font-size: 1.5rem;
+    transition: color 0.3s;
+}
+
+.social-links a:hover {
+    color: var(--accent);
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.footer-bottom p {
+    color: black;
+    font-size: 0.9rem;
+}
+
+@media(max-width:768px) {
+    .mobile-toggle {
+        display: block;
+        color: black;
+        /* Garante a cor preta do ícone no mobile */
+    }
+
+    .nav-menu {
+        display: none;
+        position: fixed;
+        /* Menu fixo ao invés de absolute */
+        top: 80px;
+        /* Altura do header mobile */
+        left: 0;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.98);
+        padding: 1rem;
+        flex-direction: column;
+        text-align: center;
+        box-shadow: var(--shadow);
+    }
+
+    .mobile-toggle {
+        margin-left: auto;
+    }
+
+    .nav-menu.active {
+        display: flex;
+    }
+
+    .partner-logos {
+        max-width: 70%;
+        /* Limita largura do container dos logos */
+    }
+
+    .logo img {
+        height: 60px;
+        /* Reduz tamanho do logo principal */
+    }
+
+    .partner-logo {
+        height: calc(60px * var(--partner-logo-scale));
+        left: auto;
+        /* Remove posicionamento absoluto */
+        position: relative;
+        transform: none;
+        margin-left: 0.5rem;
+    }
+
+    .hero-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .contact-container {
+        grid-template-columns: 1fr;
+    }
+
+    .radio-container {
+        height: 500px;
+    }
+
+    .radio {
+        width: 200px;
+    }
+
+    .radio-1 {
+        left: 5%;
+    }
+
+    .radio-2 {
+        right: 5%;
+    }
+
+    .footer-tecpoint-logo img {
+        height: 80px !important;
+        /* Força sobrescrever */
+        width: auto;
+        max-width: 200px;
+    }
+
+    .footer-wings-logo img {
+        height: 66px !important;
+        /* 60% de 60px */
+        width: auto;
+        max-width: 120px;
+        min-width: unset;
+        /* Remove min-width no mobile */
+    }
+}
+
+@media(max-width:480px) {
+    .radio-container {
+        height: 400px;
+    }
+
+    .radio {
+        width: 160px;
+    }
+
+    .radio-1 {
+        left: 2%;
+    }
+
+    .radio-2 {
+        right: 2%;
+    }
+
+    .section-header h2 {
+        font-size: 2rem;
+    }
+
+    .footer-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .social-links {
+        justify-content: center;
+    }
+
+    .footer-logo {
+        height: auto;
+        width: auto;
+        max-width: 200px;
+        height: calc(var(--max-logo-height)*var(--partner-logo-scale));
+        min-width: var(--logo-min-width, 20mm);
+    }
+
+    .partner-logos {
+        padding-right: 0;
+    }
+
+    .partner-logo {
+        position: static;
+        transform: none;
+        margin-left: var(--logo-spacing);
+    }
+
+    .footer-tecpoint-logo img {
+        height: 60px;
+        margin: 0 auto;
+    }
+
+    .footer-wings-logo img {
+        height: 36px;
+        margin: 1rem auto;
+    }
+
+    .logo img {
+        height: 60px;
+        /* Reduz ainda mais o logo principal */
+    }
+
+    .partner-logo {
+        height: calc(80px * var(--partner-logo-scale));
+        min-width: auto;
+        /* Remove min-width em telas muito pequenas */
+    }
+
+    .partner-logos {
+        max-width: 80%;
+        gap: 0.5rem;
+    }
+
+    .instagram-section {
+        padding: 6rem 1.5rem;
+        background: var(--darker);
+        position: relative;
+    }
+
+    .instagram-feed iframe {
+        width: 100% !important;
+        min-height: 450px;
+        border: none;
+        margin: 0 !important;
+    }
+}

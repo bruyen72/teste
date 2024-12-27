@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Não Encontrada - TecPoint</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='Logo TecPoint (1).png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/404.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="{{ url_for('index') }}" class="logo">
+                <img src="{{ url_for('static', filename='LogoTecPoint.png') }}" alt="TecPoint Logo">
+            </a>
+        </div>
+    </header>
+
+    <!-- Conteúdo do Erro -->
+    <div class="error-container">
+        <div class="error-content">
+            <h1 class="error-title">404</h1>
+            <h2 class="error-message">Página Não Encontrada</h2>
+            <p class="error-description">
+                A página que você está procurando pode ter sido removida, teve seu nome alterado ou está temporariamente indisponível.
+            </p>
+            <a href="{{ url_for('index') }}" class="button button-primary">
+                <i class="fas fa-home"></i> Voltar para a Home
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2024 TecPoint. Todos os direitos reservados.</p>
+    </footer>
+</body>
+</html>
