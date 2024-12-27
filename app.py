@@ -141,6 +141,7 @@ def delete_file(filename):
 
 def admin_required(f):
     """Decorador para rotas que requerem autenticação"""
+    from functools import wraps
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('admin_logged_in'):
@@ -562,7 +563,6 @@ Enviado através do formulário (rota /enviar-contato)
         print(f'Erro geral: {e}')
         return jsonify({'error': 'Ocorreu um erro inesperado'}), 500
 
-
 # ------------------------------------------------------------------------
 # FIM NOVA ROTA
 # ------------------------------------------------------------------------
@@ -587,7 +587,10 @@ if __name__ == '__main__':
                 print("Admin padrão criado com sucesso!")
             
             print("Sistema inicializado com sucesso!")
-            app.run(debug=True, port=5000)
-            
+
+            # ---- Ajuste para Railway: ler variável PORT e usar host 0.0.0.0 ----
+            port = int(os.environ.get("PORT", 5000))
+            app.run(debug=True, host="0.0.0.0", port=port)
+
         except Exception as e:
             print(f"Erro na inicialização: {e}")
