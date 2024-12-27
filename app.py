@@ -27,8 +27,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config.update(
-    SECRET_KEY=os.urandom(24),
-    SQLALCHEMY_DATABASE_URI='sqlite:///tecpoint.db',
+    SECRET_KEY=os.environ.get('SECRET_KEY', os.urandom(24)),
+    SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', 'sqlite:///tecpoint.db'),
+    SQLALCHEMY_TRACK_MODIFICATIONS=False,  # Adicione esta linha
     UPLOAD_FOLDER=UPLOAD_FOLDER,
     MAX_CONTENT_LENGTH=50 * 1024 * 1024  # 50MB max-limit
 )
