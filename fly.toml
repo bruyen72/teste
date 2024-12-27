@@ -1,12 +1,11 @@
 app = "tecpoint"
-primary_region = "gru"
 
 [build]
   dockerfile = "Dockerfile"
 
+[env]
+  PORT = "8080"
+
 [http_service]
   internal_port = 8080
   force_https = true
-
-[deploy]
-  strategy = "immediate"
