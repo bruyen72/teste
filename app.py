@@ -570,9 +570,13 @@ Enviado através do formulário (rota /enviar-contato)
 if __name__ == '__main__':
     with app.app_context():
         try:
+            # Garante que o diretório de uploads existe
             ensure_upload_dir()
+            
+            # Inicializa o banco de dados
             db.create_all()
             
+            # Cria admin padrão se não existir
             if not Admin.query.filter_by(username='admin').first():
                 admin = Admin(
                     username='admin',
@@ -584,12 +588,14 @@ if __name__ == '__main__':
             
             print("Sistema inicializado com sucesso!")
             
-            # Configuração para Fly.io
-            port = int(os.environ.get('PORT', 8080))
+            # Configuração para Fly.io e desenvolvimento
             if os.environ.get('FLY_APP_NAME'):
-                app.run(host='0.0.0.0', port=port)
+                # Produção no Fly.io
+                port = int(os.environ.get('PORT', 8080))
+                app.run(host='0.0.0.0', port=port, debug=False)
             else:
-                app.run(debug=True, port=5000)  # Desenvolvimento local
+                # Desenvolvimento local
+                app.run(host='localhost', port=5000, debug=True)
 
         except Exception as e:
             print(f"Erro na inicialização: {e}")
