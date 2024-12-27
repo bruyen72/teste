@@ -588,9 +588,9 @@ if __name__ == '__main__':
             
             print("Sistema inicializado com sucesso!")
 
-            # ---- Ajuste para Railway: ler variável PORT e usar host 0.0.0.0 ----
-            port = int(os.environ.get("PORT", 8000))
-            app.run(debug=True, host="0.0.0.0", port=port)
+            # ---- Ajuste para Fly.io: Configura a porta e host ----
+            port = int(os.environ.get("PORT", 8080))  # Fly.io usa a porta 8080 por padrão
+            app.run(debug=False, host="0.0.0.0", port=port)  # Configura para aceitar conexões externas
 
         except Exception as e:
             print(f"Erro na inicialização: {e}")
