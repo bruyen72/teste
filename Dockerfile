@@ -1,5 +1,5 @@
-# Use uma imagem Python base
-FROM python:3.12-slim
+# Use uma imagem base Python leve
+FROM python:3.10-slim
 
 # Instale dependências do sistema
 RUN apt-get update && apt-get install -y \
@@ -10,10 +10,10 @@ RUN apt-get update && apt-get install -y \
 # Configure o diretório de trabalho
 WORKDIR /app
 
-# Copie o arquivo de dependências
+# Copie os arquivos necessários
 COPY requirements.txt .
 
-# Instale as dependências
+# Instale as dependências do Python
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copie o código do projeto
