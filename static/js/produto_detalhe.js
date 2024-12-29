@@ -4,47 +4,51 @@ document.addEventListener('DOMContentLoaded', function () {
     const navMenu = document.querySelector('.nav-menu');
 
     if (mobileToggle && navMenu) {
-        // Toggle do menu ao clicar no botão
+        // Alterna o menu ao clicar no botão
         mobileToggle.addEventListener('click', function () {
             navMenu.classList.toggle('active');
             mobileToggle.classList.toggle('active');
-            console.log('Menu Mobile clicado');
+            console.log('Menu Mobile: Estado alterado.');
         });
 
-        // Fecha o menu ao clicar em um link
+        // Fecha o menu ao clicar em qualquer link
         const menuLinks = navMenu.querySelectorAll('.nav-link');
         menuLinks.forEach(link => {
             link.addEventListener('click', function () {
-                console.log(`Link clicado: ${link.textContent}`);
                 navMenu.classList.remove('active');
                 mobileToggle.classList.remove('active');
+                console.log(`Menu fechado após clicar em: ${link.textContent}`);
             });
         });
 
-        // Fecha o menu ao clicar fora
+        // Fecha o menu ao clicar fora dele
         document.addEventListener('click', function (e) {
             if (!mobileToggle.contains(e.target) && !navMenu.contains(e.target)) {
                 if (navMenu.classList.contains('active')) {
-                    console.log('Fechando menu ao clicar fora');
                     navMenu.classList.remove('active');
                     mobileToggle.classList.remove('active');
+                    console.log('Menu Mobile: Fechado ao clicar fora.');
                 }
             }
         });
+    } else {
+        console.error('Menu Mobile: Falta o botão de toggle ou o menu no DOM.');
     }
 
     // =============== GALERIA DE IMAGENS ===============
     const mainImage = document.getElementById('mainImage');
     const thumbnails = document.querySelectorAll('.thumbnail');
-    let imageList = [{% for img_path in all_images %}"{{ url_for('uploaded_file', filename=img_path) }}", {% endfor %}];
+    let imageList = []; // Inicializar com dados reais no backend
     let currentIndex = 0;
 
     function updateMainImage(index) {
         currentIndex = index;
-        mainImage.src = imageList[currentIndex];
-        thumbnails.forEach((thumb, i) => {
-            thumb.classList.toggle('active', i === currentIndex);
-        });
+        if (mainImage && imageList.length) {
+            mainImage.src = imageList[currentIndex];
+            thumbnails.forEach((thumb, i) => {
+                thumb.classList.toggle('active', i === currentIndex);
+            });
+        }
     }
 
     thumbnails.forEach((thumb, index) => {
@@ -67,117 +71,63 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (mainImage) {
         mainImage.addEventListener('click', () => {
-            modalImage.src = imageList[currentIndex];
-            imageModal.classList.add('active');
-            scale = 1;
-            translateX = 0;
-            translateY = 0;
-            updateModalTransform();
+            if (imageModal && modalImage && imageList.length) {
+                modalImage.src = imageList[currentIndex];
+                imageModal.classList.add('active');
+            }
         });
     }
 
     if (closeModal) {
         closeModal.addEventListener('click', () => {
-            imageModal.classList.remove('active');
-            modalImage.style.transform = 'scale(1) translate(0,0)';
+            if (imageModal) imageModal.classList.remove('active');
         });
     }
 
-    // Navegação do Modal
-    if (imageList.length > 1) {
-        modalPrevBtn.style.display = 'block';
-        modalNextBtn.style.display = 'block';
-
+    if (modalPrevBtn && modalNextBtn) {
         modalPrevBtn.addEventListener('click', () => {
-            let newIndex = currentIndex - 1;
-            if (newIndex < 0) newIndex = imageList.length - 1;
-            currentIndex = newIndex;
-            modalImage.src = imageList[currentIndex];
-            resetZoomPan();
+            if (imageList.length > 0) {
+                currentIndex = (currentIndex - 1 + imageList.length) % imageList.length;
+                modalImage.src = imageList[currentIndex];
+            }
         });
 
         modalNextBtn.addEventListener('click', () => {
-            let newIndex = currentIndex + 1;
-            if (newIndex >= imageList.length) newIndex = 0;
-            currentIndex = newIndex;
-            modalImage.src = imageList[currentIndex];
-            resetZoomPan();
+            if (imageList.length > 0) {
+                currentIndex = (currentIndex + 1) % imageList.length;
+                modalImage.src = imageList[currentIndex];
+            }
         });
-    } else {
-        modalPrevBtn.style.display = 'none';
-        modalNextBtn.style.display = 'none';
     }
 
     // =============== ZOOM E PAN ===============
     let scale = 1;
     let translateX = 0;
     let translateY = 0;
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
 
     function updateModalTransform() {
-        modalImage.style.transform = `translate(${translateX}px,${translateY}px) scale(${scale})`;
+        if (modalImage) {
+            modalImage.style.transform = `translate(${translateX}px,${translateY}px) scale(${scale})`;
+        }
     }
-
-    function resetZoomPan() {
-        scale = 1;
-        translateX = 0;
-        translateY = 0;
-        updateModalTransform();
-    }
-
-    modalImage.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        const delta = Math.sign(e.deltaY) * -0.1;
-        scale = Math.max(0.5, Math.min(5, scale + delta));
-        updateModalTransform();
-    });
 
     modalContent.addEventListener('mousedown', (e) => {
-        if (scale > 1) {
-            isDragging = true;
-            startX = e.clientX - translateX;
-            startY = e.clientY - translateY;
-            modalContent.style.cursor = 'grabbing';
-        }
-    });
+        let startX = e.clientX - translateX;
+        let startY = e.clientY - translateY;
 
-    window.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-            translateX = e.clientX - startX;
-            translateY = e.clientY - startY;
+        const moveHandler = (event) => {
+            translateX = event.clientX - startX;
+            translateY = event.clientY - startY;
             updateModalTransform();
-        }
-    });
+        };
 
-    window.addEventListener('mouseup', () => {
-        if (isDragging) {
-            isDragging = false;
-            modalContent.style.cursor = scale > 1 ? 'grab' : 'default';
-        }
-    });
+        const stopHandler = () => {
+            document.removeEventListener('mousemove', moveHandler);
+            document.removeEventListener('mouseup', stopHandler);
+        };
 
-    // Touch events
-    modalContent.addEventListener('touchstart', (e) => {
-        if (scale > 1 && e.touches.length === 1) {
-            isDragging = true;
-            startX = e.touches[0].clientX - translateX;
-            startY = e.touches[0].clientY - translateY;
-        }
-    }, { passive: false });
-
-    modalContent.addEventListener('touchmove', (e) => {
-        if (isDragging && scale > 1 && e.touches.length === 1) {
-            e.preventDefault();
-            translateX = e.touches[0].clientX - startX;
-            translateY = e.touches[0].clientY - startY;
-            updateModalTransform();
-        }
-    }, { passive: false });
-
-    modalContent.addEventListener('touchend', () => {
-        isDragging = false;
+        document.addEventListener('mousemove', moveHandler);
+        document.addEventListener('mouseup', stopHandler);
     });
 
     // =============== FORMULÁRIO DE COTAÇÃO ===============
@@ -185,40 +135,28 @@ document.addEventListener('DOMContentLoaded', function () {
     const quotationButton = document.getElementById('quotationButton');
     const closeQuotationForm = document.getElementById('closeQuotationForm');
     const quotationForm = document.getElementById('quotationForm');
-    const quotationProductImage = document.getElementById('quotationProductImage');
-    const quotationProductName = document.getElementById('quotationProductName');
-    const quotationProductCategory = document.getElementById('quotationProductCategory');
 
     if (quotationButton) {
         quotationButton.addEventListener('click', (e) => {
             e.preventDefault();
-            const fullImageUrl = window.location.origin + mainImage.getAttribute('src');
-            quotationProductImage.src = fullImageUrl;
-            quotationProductName.textContent = '{{ product.name }}';
-            quotationProductCategory.textContent = '{{ product.category }}';
-            quotationModal.classList.add('active');
+            if (quotationModal) {
+                quotationModal.classList.add('active');
+            }
         });
     }
 
     if (closeQuotationForm) {
         closeQuotationForm.addEventListener('click', () => {
-            quotationModal.classList.remove('active');
+            if (quotationModal) {
+                quotationModal.classList.remove('active');
+            }
         });
     }
 
     if (quotationForm) {
         quotationForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const formData = new FormData(quotationForm);
-            formData.append('product_name', '{{ product.name }}');
-            formData.append('product_category', '{{ product.category }}');
-            formData.append('product_image_url', '{{ product.image_path }}');
-
-            const submitButton = quotationForm.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton.innerHTML;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
-            submitButton.disabled = true;
 
             try {
                 const response = await fetch('/enviar-cotacao', {
@@ -226,31 +164,25 @@ document.addEventListener('DOMContentLoaded', function () {
                     body: formData
                 });
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('Cotação enviada com sucesso! Você receberá um email de confirmação em breve.');
-                    quotationForm.reset();
-                    quotationModal.classList.remove('active');
-                } else {
-                    throw new Error(data.error || 'Erro ao enviar cotação');
+                if (!response.ok) {
+                    throw new Error('Erro ao enviar cotação');
                 }
+
+                alert('Cotação enviada com sucesso!');
+                quotationForm.reset();
+                if (quotationModal) quotationModal.classList.remove('active');
             } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro ao enviar cotação. Por favor, tente novamente ou entre em contato por telefone.');
-            } finally {
-                submitButton.innerHTML = originalButtonText;
-                submitButton.disabled = false;
+                alert(error.message);
             }
         });
     }
 
     // =============== FECHAMENTO GLOBAL ===============
-    window.addEventListener('click', (e) => {
+    document.addEventListener('click', (e) => {
         if (e.target === imageModal) {
             imageModal.classList.remove('active');
-            resetZoomPan();
         }
+
         if (e.target === quotationModal) {
             quotationModal.classList.remove('active');
         }
@@ -258,9 +190,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            imageModal.classList.remove('active');
-            resetZoomPan();
-            quotationModal.classList.remove('active');
+            if (imageModal) imageModal.classList.remove('active');
+            if (quotationModal) quotationModal.classList.remove('active');
         }
     });
 });
