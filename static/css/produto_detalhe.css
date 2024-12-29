@@ -533,7 +533,7 @@ body {
     }
 
     .nav-menu.active {
-        display: flex;
+        display: block;
     }
 
     .produto-container {
