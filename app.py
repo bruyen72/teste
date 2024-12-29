@@ -181,14 +181,14 @@ def solucoes():
 def contato():
     return render_template('contato.html')
 
-@app.route('/produtos1')
+@app.route('/produtos')
 def produtos():
     category = request.args.get('category', 'all')
     if category == 'all':
         products = Product.query.order_by(Product.created_at.desc()).all()
     else:
         products = Product.query.filter_by(category=category).order_by(Product.created_at.desc()).all()
-    return render_template('produtos1.html', products=products, current_category=category)
+    return render_template('produtos.html', products=products, current_category=category)
 
 @app.route('/produto/<int:id>')
 def produto_detalhe(id):
