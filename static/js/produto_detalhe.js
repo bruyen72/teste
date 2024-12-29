@@ -1,17 +1,36 @@
-// Mobile menu toggle
-const mobileToggle = document.querySelector('.mobile-toggle');
-const navMenu = document.querySelector('.nav-menu');
+document.addEventListener('DOMContentLoaded', function () {
+    // =============== MENU MOBILE ===============
+    const mobileToggle = document.querySelector('.mobile-toggle');
+    const navMenu = document.querySelector('.nav-menu');
 
-if (mobileToggle) {
-    mobileToggle.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
-    });
-}
+    if (mobileToggle) {
+        mobileToggle.addEventListener('click', function () {
+            navMenu.classList.toggle('active');
+            mobileToggle.classList.toggle('active');
+            console.log('Menu clicked');
+        });
 
-// Image gallery
-const mainImage = document.getElementById('mainImage');
-const thumbnails = document.querySelectorAll('.thumbnail');
-let imageList = [{% for img_path in all_images %}"{{ url_for('uploaded_file', filename=img_path) }}", {% endfor %}];
+        const menuLinks = navMenu.querySelectorAll('.nav-link');
+        menuLinks.forEach(link => {
+            link.addEventListener('click', function () {
+                navMenu.classList.remove('active');
+                mobileToggle.classList.remove('active');
+            });
+        });
+
+        // Fecha menu ao clicar fora
+        document.addEventListener('click', function (e) {
+            if (!mobileToggle.contains(e.target) && !navMenu.contains(e.target)) {
+                navMenu.classList.remove('active');
+                mobileToggle.classList.remove('active');
+            }
+        });
+    }
+
+    // =============== GALERIA DE IMAGENS ===============
+    const mainImage = document.getElementById('mainImage');
+    const thumbnails = document.querySelectorAll('.thumbnail');
+    let imageList = [{% for img_path in all_images %}"{{ url_for('uploaded_file', filename=img_path) }}", {% endfor %}];
 let currentIndex = 0;
 
 function updateMainImage(index) {
@@ -32,7 +51,7 @@ if (imageList.length > 1) {
     updateMainImage(0);
 }
 
-// Image modal
+// =============== MODAL DE IMAGEM ===============
 const imageModal = document.getElementById('imageModal');
 const modalImage = document.getElementById('modalImage');
 const closeModal = document.getElementById('closeModal');
@@ -54,7 +73,7 @@ closeModal.addEventListener('click', () => {
     modalImage.style.transform = 'scale(1) translate(0,0)';
 });
 
-// Modal navigation
+// Navegação do Modal
 if (imageList.length > 1) {
     modalPrevBtn.style.display = 'block';
     modalNextBtn.style.display = 'block';
@@ -64,10 +83,7 @@ if (imageList.length > 1) {
         if (newIndex < 0) newIndex = imageList.length - 1;
         currentIndex = newIndex;
         modalImage.src = imageList[currentIndex];
-        scale = 1;
-        translateX = 0;
-        translateY = 0;
-        updateModalTransform();
+        resetZoomPan();
     });
 
     modalNextBtn.addEventListener('click', () => {
@@ -75,37 +91,38 @@ if (imageList.length > 1) {
         if (newIndex >= imageList.length) newIndex = 0;
         currentIndex = newIndex;
         modalImage.src = imageList[currentIndex];
-        scale = 1;
-        translateX = 0;
-        translateY = 0;
-        updateModalTransform();
+        resetZoomPan();
     });
 } else {
     modalPrevBtn.style.display = 'none';
     modalNextBtn.style.display = 'none';
 }
 
-// Modal zoom and pan
+// =============== ZOOM E PAN ===============
 let scale = 1;
 let translateX = 0;
 let translateY = 0;
+let isDragging = false;
+let startX = 0;
+let startY = 0;
 
 function updateModalTransform() {
     modalImage.style.transform = `translate(${translateX}px,${translateY}px) scale(${scale})`;
 }
 
+function resetZoomPan() {
+    scale = 1;
+    translateX = 0;
+    translateY = 0;
+    updateModalTransform();
+}
+
 modalImage.addEventListener('wheel', (e) => {
     e.preventDefault();
     const delta = Math.sign(e.deltaY) * -0.1;
-    scale += delta;
-    if (scale < 0.5) scale = 0.5;
-    if (scale > 5) scale = 5;
+    scale = Math.max(0.5, Math.min(5, scale + delta));
     updateModalTransform();
 });
-
-let isDragging = false;
-let startX = 0;
-let startY = 0;
 
 modalContent.addEventListener('mousedown', (e) => {
     if (scale > 1) {
@@ -131,7 +148,7 @@ window.addEventListener('mouseup', () => {
     }
 });
 
-// Touch events for modal
+// Touch events
 modalContent.addEventListener('touchstart', (e) => {
     if (scale > 1 && e.touches.length === 1) {
         isDragging = true;
@@ -150,12 +167,10 @@ modalContent.addEventListener('touchmove', (e) => {
 }, { passive: false });
 
 modalContent.addEventListener('touchend', () => {
-    if (scale > 1) {
-        isDragging = false;
-    }
-}, { passive: false });
+    isDragging = false;
+});
 
-// Quotation form handling
+// =============== FORMULÁRIO DE COTAÇÃO ===============
 const quotationModal = document.getElementById('quotationModal');
 const quotationButton = document.getElementById('quotationButton');
 const closeQuotationForm = document.getElementById('closeQuotationForm');
@@ -166,7 +181,6 @@ const quotationProductCategory = document.getElementById('quotationProductCatego
 
 quotationButton.addEventListener('click', (e) => {
     e.preventDefault();
-    // Construir URL completa da imagem
     const fullImageUrl = window.location.origin + mainImage.getAttribute('src');
     quotationProductImage.src = fullImageUrl;
     quotationProductName.textContent = '{{ product.name }}';
@@ -184,12 +198,8 @@ quotationForm.addEventListener('submit', async (e) => {
     const formData = new FormData(quotationForm);
     formData.append('product_name', '{{ product.name }}');
     formData.append('product_category', '{{ product.category }}');
+    formData.append('product_image_url', '{{ product.image_path }}');
 
-    // Pega o nome do arquivo da imagem do produto
-    const productImage = '{{ product.image_path }}';  // Nome do arquivo direto do banco
-    formData.append('product_image_url', productImage);
-
-    // Mostra loading
     const submitButton = quotationForm.querySelector('button[type="submit"]');
     const originalButtonText = submitButton.innerHTML;
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
@@ -219,22 +229,23 @@ quotationForm.addEventListener('submit', async (e) => {
     }
 });
 
-// Close modals when clicking outside
+// =============== FECHAMENTO GLOBAL ===============
+// Fecha modais ao clicar fora
 window.addEventListener('click', (e) => {
     if (e.target === imageModal) {
         imageModal.classList.remove('active');
-        modalImage.style.transform = 'scale(1) translate(0,0)';
+        resetZoomPan();
     }
     if (e.target === quotationModal) {
         quotationModal.classList.remove('active');
     }
 });
 
-// Close modals with Escape key
+// Fecha modais com tecla ESC
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         imageModal.classList.remove('active');
-        modalImage.style.transform = 'scale(1) translate(0,0)';
+        resetZoomPan();
         quotationModal.classList.remove('active');
     }
 });
