@@ -521,7 +521,40 @@ def add_security_headers(response):
 # ------------------------------------------------------------------------
 # NOVA ROTA /enviar-contato IDENTICA AO /enviar-contato-site:
 # (Usando request.get_json(), corpo 'plain', e sem remover nenhum código.)
-# ------------------------------------------------------------------------
+# -----------------------------------------------------------------------
+
+# Logo após as definições de Product e Admin
+@app.before_first_request
+def init_database():
+    with app.app_context():
+        try:
+            # Criar todas as tabelas
+            db.create_all()
+            print("Tabelas criadas com sucesso!")
+
+            # Verificar e criar admin padrão se não existir
+            admin = Admin.query.filter_by(username='admin').first()
+            if not admin:
+                admin = Admin(
+                    username='admin',
+                    password_hash=generate_password_hash('admin123')
+                )
+                db.session.add(admin)
+                db.session.commit()
+                print("Admin criado com sucesso!")
+
+            # Verificar se existem produtos
+            produtos_count = Product.query.count()
+            print(f"Total de produtos no banco: {produtos_count}")
+
+            # Garantir que a pasta de uploads existe
+            uploads_dir = os.path.join(os.getcwd(), 'static', 'uploads')
+            if not os.path.exists(uploads_dir):
+                os.makedirs(uploads_dir)
+                print("Pasta de uploads criada!")
+
+        except Exception as e:
+            print(f"Erro na inicialização: {e}")
 @app.route('/enviar-contatoTEC', methods=['POST'])
 def enviar_contato_form():
     try:
