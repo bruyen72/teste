@@ -5,6 +5,7 @@ const navMenu = document.querySelector('.nav-menu');
 if (mobileToggle && navMenu) {
     mobileToggle.addEventListener('click', () => {
         navMenu.classList.toggle('active');
+        mobileToggle.classList.toggle('active');
         console.log('Menu Mobile: Toggled');
     });
 
@@ -12,6 +13,7 @@ if (mobileToggle && navMenu) {
     document.addEventListener('click', (e) => {
         if (!mobileToggle.contains(e.target) && !navMenu.contains(e.target)) {
             navMenu.classList.remove('active');
+            mobileToggle.classList.remove('active');
         }
     });
 } else {
@@ -31,15 +33,14 @@ function updateMainImage(index) {
         thumbnails.forEach((thumb, i) => {
             thumb.classList.toggle('active', i === currentIndex);
         });
+        console.log(`Imagem principal atualizada para o índice ${currentIndex}`);
     } else {
         console.error('Imagem principal ou lista de imagens ausente');
     }
 }
 
 thumbnails.forEach((thumb, index) => {
-    thumb.addEventListener('click', () => {
-        updateMainImage(index);
-    });
+    thumb.addEventListener('click', () => updateMainImage(index));
 });
 
 if (imageList.length > 0) {
@@ -60,10 +61,7 @@ if (mainImage && imageModal && modalImage) {
     mainImage.addEventListener('click', () => {
         modalImage.src = imageList[currentIndex];
         imageModal.classList.add('active');
-        scale = 1;
-        translateX = 0;
-        translateY = 0;
-        updateModalTransform();
+        resetZoomPan();
         console.log('Modal de imagem aberto');
     });
 }
@@ -71,7 +69,7 @@ if (mainImage && imageModal && modalImage) {
 if (closeModal) {
     closeModal.addEventListener('click', () => {
         imageModal.classList.remove('active');
-        modalImage.style.transform = 'scale(1) translate(0,0)';
+        resetZoomPan();
         console.log('Modal de imagem fechado');
     });
 }
@@ -81,12 +79,14 @@ if (modalPrevBtn && modalNextBtn) {
         currentIndex = (currentIndex - 1 + imageList.length) % imageList.length;
         modalImage.src = imageList[currentIndex];
         resetZoomPan();
+        console.log('Imagem anterior exibida no modal');
     });
 
     modalNextBtn.addEventListener('click', () => {
         currentIndex = (currentIndex + 1) % imageList.length;
         modalImage.src = imageList[currentIndex];
         resetZoomPan();
+        console.log('Próxima imagem exibida no modal');
     });
 }
 
@@ -113,6 +113,7 @@ if (modalImage && modalContent) {
         e.preventDefault();
         scale = Math.max(0.5, Math.min(5, scale + Math.sign(e.deltaY) * -0.1));
         updateModalTransform();
+        console.log(`Zoom aplicado: ${scale}`);
     });
 
     let isDragging = false;
