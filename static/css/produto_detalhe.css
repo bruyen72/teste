@@ -534,8 +534,6 @@ body {
 
     .nav-menu.active {
         display: flex;
-        flex-direction: column;
-        gap: 15px;
     }
 
     .produto-container {
