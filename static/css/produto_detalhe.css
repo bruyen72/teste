@@ -534,12 +534,22 @@ body {
 
     .nav-menu.active {
         display: flex;
+        flex-direction: column;
+        gap: 15px;
     }
 
     .produto-container {
         grid-template-columns: 1fr;
         gap: 2rem;
         padding: 1rem;
+    }
+    .nav-link {
+        width: 100%;
+        text-align: center;
+        padding: 12px;
+    }
+    .nav-link:hover {
+        background-color: var(--hover-bg);
     }
 
     .produto-imagem {
@@ -558,6 +568,9 @@ body {
     .modal img {
         max-width: 80%;
         max-height: 80%;
+    }
+    .header {
+        background: white;
     }
 }
 
