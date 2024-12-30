@@ -202,12 +202,7 @@ def produto_detalhe(id):
 @app.route('/enviar-cotacao', methods=['POST'])
 def enviar_cotacao():
     try:
-        # Validação dos campos obrigatórios
-        required_fields = ['name', 'email', 'phone', 'product_name', 'product_category']
-        for field in required_fields:
-            if not request.form.get(field):
-                return jsonify({'error': f'Campo {field} é obrigatório'}), 400
-
+        # Dados do formulário
         dados = {
             'nome': request.form.get('name', '').strip(),
             'email': request.form.get('email', '').strip(),
@@ -220,62 +215,89 @@ def enviar_cotacao():
             'data': datetime.now().strftime('%d/%m/%Y às %H:%M')
         }
 
-        html_content = f"""
+        # Email para a TecPoint
+        msg_tecpoint = MIMEMultipart('alternative')
+        msg_tecpoint['Subject'] = f'Nova Cotação - {dados["produto"]}'
+        msg_tecpoint['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
+        msg_tecpoint['To'] = SMTP_USERNAME
+        msg_tecpoint['Reply-To'] = dados['email']
+        msg_tecpoint['Date'] = formatdate(localtime=True)
+
+        # Email para o Cliente
+        msg_cliente = MIMEMultipart('alternative')
+        msg_cliente['Subject'] = 'Recebemos sua solicitação de cotação - TecPoint'
+        msg_cliente['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
+        msg_cliente['To'] = dados['email']
+        msg_cliente['Date'] = formatdate(localtime=True)
+
+        # Conteúdo do email para TecPoint
+        html_tecpoint = f"""
         <html>
-        <body style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 5px;">
-                <h2 style="color: #00A859; border-bottom: 2px solid #00A859; padding-bottom: 10px;">Nova Solicitação de Cotação</h2>
-                
-                <h3 style="color: #444;">Dados do Cliente</h3>
-                <p><strong>Nome:</strong> {dados['nome']}<br>
-                <strong>Email:</strong> {dados['email']}<br>
-                <strong>Telefone:</strong> {dados['telefone']}<br>
-                <strong>Empresa:</strong> {dados['empresa']}</p>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="color: #00A859;">Nova Solicitação de Cotação</h2>
+            
+            <h3>Dados do Cliente</h3>
+            <p>
+            <strong>Nome:</strong> {dados['nome']}<br>
+            <strong>Email:</strong> {dados['email']}<br>
+            <strong>Telefone:</strong> {dados['telefone']}<br>
+            <strong>Empresa:</strong> {dados['empresa']}</p>
 
-                <div style="background: #fff; padding: 15px; border-left: 4px solid #00A859; margin: 20px 0;">
-                    <h3 style="color: #444; margin-top: 0;">Produto Solicitado</h3>
-                    <p><strong>Produto:</strong> {dados['produto']}<br>
-                    <strong>Categoria:</strong> {dados['categoria']}<br>
-                    <strong>Quantidade:</strong> {dados['quantidade']}</p>
-                </div>
+            <h3>Produto Solicitado</h3>
+            <p>
+            <strong>Produto:</strong> {dados['produto']}<br>
+            <strong>Categoria:</strong> {dados['categoria']}<br>
+            <strong>Quantidade:</strong> {dados['quantidade']}</p>
 
-                <div style="background: #fff; padding: 15px; margin: 20px 0;">
-                    <h3 style="color: #444; margin-top: 0;">Mensagem</h3>
-                    <p>{dados['mensagem'] or 'Nenhuma mensagem adicional.'}</p>
-                </div>
+            <h3>Mensagem</h3>
+            <p>{dados['mensagem'] if dados['mensagem'] else 'Nenhuma mensagem adicional.'}</p>
 
-                <p style="color: #666; font-style: italic; text-align: right;">
-                    Solicitação recebida em {dados['data']}
-                </p>
-            </div>
+            <p><em>Solicitação recebida em {dados['data']}</em></p>
         </body>
         </html>
         """
 
-        # Criar mensagem de email
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = f'Nova Cotação - {dados["produto"]}'
-        msg['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
-        msg['To'] = SMTP_USERNAME
-        msg['Date'] = formatdate(localtime=True)
-        msg.add_header('Reply-To', dados['email'])
+        # Conteúdo do email para o Cliente
+        html_cliente = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="color: #00A859;">Recebemos sua solicitação de cotação</h2>
+            
+            <p>Olá {dados['nome']},</p>
+            
+            <p>Recebemos sua solicitação de cotação para o produto:</p>
+            <p>
+            <strong>Produto:</strong> {dados['produto']}<br>
+            <strong>Quantidade:</strong> {dados['quantidade']}
+            </p>
 
-        # Anexar conteúdo HTML
-        msg.attach(MIMEText(html_content, 'html', 'utf-8'))
+            <p>Em breve nossa equipe entrará em contato com você.</p>
 
-        # Enviar email usando as configurações globais
+            <p>Atenciosamente,<br>
+            <strong>Equipe TecPoint</strong><br>
+            Tel: (11) 4508-7767<br>
+            www.tecpoint.net.br</p>
+        </body>
+        </html>
+        """
+
+        # Anexar conteúdos HTML
+        msg_tecpoint.attach(MIMEText(html_tecpoint, 'html', 'utf-8'))
+        msg_cliente.attach(MIMEText(html_cliente, 'html', 'utf-8'))
+
+        # Enviar os emails
         with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
             server.ehlo()
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
-            server.send_message(msg)
+            # Envia para TecPoint
+            server.send_message(msg_tecpoint)
+            # Envia para o cliente
+            server.send_message(msg_cliente)
 
         return jsonify({'message': 'Cotação enviada com sucesso!'}), 200
 
-    except smtplib.SMTPException as smtp_error:
-        print(f'Erro SMTP ao enviar cotação: {smtp_error}')
-        return jsonify({'error': 'Erro no servidor de email. Tente novamente mais tarde.'}), 500
     except Exception as e:
-        print(f'Erro geral ao enviar cotação: {e}')
+        print(f'Erro ao enviar cotação: {e}')
         return jsonify({'error': 'Ocorreu um erro inesperado'}), 500
 
 def is_valid_email(email):
