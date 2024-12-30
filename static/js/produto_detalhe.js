@@ -1,5 +1,5 @@
 window.addEventListener('load', function() {
-    console.log('Página totalmente carregada');
+    console.log('Página carregada completamente');
 
     // === MENU MOBILE ===
     const mobileToggle = document.querySelector('.mobile-toggle');
@@ -9,11 +9,27 @@ window.addEventListener('load', function() {
         mobileToggle.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            navMenu.classList.toggle('active');
+            
             mobileToggle.classList.toggle('active');
-            console.log('Menu clicado');
+            navMenu.classList.toggle('active');
+            
+            if (navMenu.classList.contains('active')) {
+                navMenu.style.opacity = '0';
+                navMenu.style.display = 'flex';
+                setTimeout(() => navMenu.style.opacity = '1', 10);
+            }
         });
 
+        // Fecha ao clicar nos links
+        const navLinks = navMenu.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                navMenu.classList.remove('active');
+                mobileToggle.classList.remove('active');
+            });
+        });
+
+        // Fecha ao clicar fora
         document.addEventListener('click', function(e) {
             if (!mobileToggle.contains(e.target) && !navMenu.contains(e.target)) {
                 navMenu.classList.remove('active');
@@ -26,23 +42,22 @@ window.addEventListener('load', function() {
     const mainImage = document.getElementById('mainImage');
     const thumbnails = document.querySelectorAll('.thumbnail');
     let currentImageIndex = 0;
+    const imageUrls = Array.from(thumbnails).map(thumb => thumb.getAttribute('data-img'));
 
-    if (mainImage && thumbnails.length > 0) {
-        const imageUrls = Array.from(thumbnails).map(thumb => thumb.getAttribute('data-img'));
-
-        function updateMainImage(index) {
+    function updateMainImage(index) {
+        if (mainImage && thumbnails.length > 0) {
             currentImageIndex = index;
             mainImage.src = imageUrls[index];
             thumbnails.forEach((thumb, i) => {
                 thumb.classList.toggle('active', i === index);
             });
         }
+    }
 
+    if (thumbnails.length > 0) {
         thumbnails.forEach((thumb, index) => {
             thumb.addEventListener('click', () => updateMainImage(index));
         });
-
-        // Inicializa com a primeira imagem
         updateMainImage(0);
     }
 
@@ -60,18 +75,21 @@ window.addEventListener('load', function() {
     let isDragging = false;
     let startX, startY;
 
-    function updateModalTransform() {
-        modalImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    function updateTransform() {
+        if (modalImage) {
+            modalImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        }
     }
 
     function resetZoom() {
         scale = 1;
         translateX = 0;
         translateY = 0;
-        updateModalTransform();
+        updateTransform();
+        modalContent.classList.remove('zoomed');
     }
 
-    if (mainImage && imageModal && modalImage) {
+    if (mainImage && modalImage && modalContent) {
         // Abrir modal
         mainImage.addEventListener('click', function() {
             modalImage.src = mainImage.src;
@@ -79,15 +97,25 @@ window.addEventListener('load', function() {
             resetZoom();
         });
 
-        // Zoom com mouse wheel
-        modalContent.addEventListener('wheel', function(e) {
+        // Zoom com duplo clique
+        modalContent.addEventListener('dblclick', function(e) {
             e.preventDefault();
-            const delta = e.deltaY > 0 ? 0.9 : 1.1;
-            scale = Math.min(Math.max(1, scale * delta), 4);
-            updateModalTransform();
+            
+            if (scale === 1) {
+                scale = 2;
+                modalContent.classList.add('zoomed');
+                // Centraliza o zoom no ponto clicado
+                const rect = modalImage.getBoundingClientRect();
+                translateX = (window.innerWidth / 2 - e.clientX) * 2;
+                translateY = (window.innerHeight / 2 - e.clientY) * 2;
+            } else {
+                resetZoom();
+            }
+            
+            updateTransform();
         });
 
-        // Pan quando zoom ativo
+        // Arrastar imagem
         modalContent.addEventListener('mousedown', function(e) {
             if (scale > 1) {
                 isDragging = true;
@@ -98,30 +126,30 @@ window.addEventListener('load', function() {
         });
 
         window.addEventListener('mousemove', function(e) {
-            if (isDragging) {
+            if (isDragging && scale > 1) {
                 translateX = e.clientX - startX;
                 translateY = e.clientY - startY;
-                updateModalTransform();
+                updateTransform();
             }
         });
 
         window.addEventListener('mouseup', function() {
             isDragging = false;
-            modalContent.style.cursor = 'grab';
+            modalContent.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
         });
 
         // Navegação entre imagens
         if (thumbnails.length > 1) {
             modalPrevBtn.addEventListener('click', function() {
                 currentImageIndex = (currentImageIndex - 1 + thumbnails.length) % thumbnails.length;
-                modalImage.src = thumbnails[currentImageIndex].getAttribute('data-img');
+                modalImage.src = imageUrls[currentImageIndex];
                 resetZoom();
                 updateMainImage(currentImageIndex);
             });
 
             modalNextBtn.addEventListener('click', function() {
                 currentImageIndex = (currentImageIndex + 1) % thumbnails.length;
-                modalImage.src = thumbnails[currentImageIndex].getAttribute('data-img');
+                modalImage.src = imageUrls[currentImageIndex];
                 resetZoom();
                 updateMainImage(currentImageIndex);
             });
@@ -141,14 +169,14 @@ window.addEventListener('load', function() {
     const quotationForm = document.getElementById('quotationForm');
 
     if (quotationButton && quotationModal && quotationForm) {
+        // Abrir modal de cotação
         quotationButton.addEventListener('click', function(e) {
             e.preventDefault();
-            const productName = document.querySelector('h1').textContent;
-            const productCategory = document.querySelector('.produto-categoria').textContent;
             
+            // Atualiza informações do produto
             document.getElementById('quotationProductImage').src = mainImage.src;
-            document.getElementById('quotationProductName').textContent = productName;
-            document.getElementById('quotationProductCategory').textContent = productCategory;
+            document.getElementById('quotationProductName').textContent = document.querySelector('h1').textContent;
+            document.getElementById('quotationProductCategory').textContent = document.querySelector('.produto-categoria').textContent;
             
             quotationModal.classList.add('active');
         });
@@ -158,7 +186,7 @@ window.addEventListener('load', function() {
             e.preventDefault();
             const submitButton = quotationForm.querySelector('button[type="submit"]');
             const originalText = submitButton.innerHTML;
-            
+
             try {
                 submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
                 submitButton.disabled = true;
@@ -191,10 +219,12 @@ window.addEventListener('load', function() {
             }
         });
 
-        // Fechar modal
-        closeQuotationForm.addEventListener('click', function() {
-            quotationModal.classList.remove('active');
-        });
+        // Fechar modal de cotação
+        if (closeQuotationForm) {
+            closeQuotationForm.addEventListener('click', function() {
+                quotationModal.classList.remove('active');
+            });
+        }
     }
 
     // === EVENTOS GLOBAIS ===
