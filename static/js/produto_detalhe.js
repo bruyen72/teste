@@ -1,4 +1,4 @@
-window.addEventListener('load', function() {
+window.addEventListener('load', function () {
     console.log('Página carregada');
 
     // === MENU MOBILE ===
@@ -6,13 +6,11 @@ window.addEventListener('load', function() {
     const navMenu = document.querySelector('.nav-menu');
 
     if (mobileToggle && navMenu) {
-        mobileToggle.addEventListener('click', function(e) {
-            e.preventDefault();
+        mobileToggle.addEventListener('click', function () {
             mobileToggle.classList.toggle('active');
             navMenu.classList.toggle('active');
         });
 
-        // Fecha menu ao clicar no link
         navMenu.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', () => {
                 mobileToggle.classList.remove('active');
@@ -70,27 +68,13 @@ window.addEventListener('load', function() {
     }
 
     if (mainImage && modalImage && modalContent) {
-        // Abrir modal
-        mainImage.addEventListener('click', function() {
+        mainImage.addEventListener('click', function () {
             modalImage.src = mainImage.src;
             imageModal.classList.add('active');
             resetImage();
         });
 
-        // Zoom e movimento
-        modalContent.addEventListener('click', function(e) {
-            if (e.target === modalImage) {
-                isZoomed = !isZoomed;
-                if (isZoomed) {
-                    modalContent.style.cursor = 'grab';
-                    modalImage.style.transform = 'scale(2)';
-                } else {
-                    resetImage();
-                }
-            }
-        });
-
-        modalContent.addEventListener('mousedown', function(e) {
+        modalContent.addEventListener('mousedown', function (e) {
             if (isZoomed) {
                 isDragging = true;
                 startX = e.clientX - translateX;
@@ -99,7 +83,7 @@ window.addEventListener('load', function() {
             }
         });
 
-        modalContent.addEventListener('mousemove', function(e) {
+        modalContent.addEventListener('mousemove', function (e) {
             if (isDragging && isZoomed) {
                 translateX = e.clientX - startX;
                 translateY = e.clientY - startY;
@@ -107,32 +91,28 @@ window.addEventListener('load', function() {
             }
         });
 
-        window.addEventListener('mouseup', function() {
+        window.addEventListener('mouseup', function () {
             isDragging = false;
             if (isZoomed) {
                 modalContent.style.cursor = 'grab';
             }
         });
 
-        // Navegação
-        if (thumbnails.length > 1) {
-            modalPrevBtn.addEventListener('click', function() {
-                currentImageIndex = (currentImageIndex - 1 + thumbnails.length) % thumbnails.length;
-                modalImage.src = imageUrls[currentImageIndex];
-                resetImage();
-                updateMainImage(currentImageIndex);
-            });
+        modalPrevBtn.addEventListener('click', function () {
+            currentImageIndex = (currentImageIndex - 1 + thumbnails.length) % thumbnails.length;
+            modalImage.src = imageUrls[currentImageIndex];
+            resetImage();
+            updateMainImage(currentImageIndex);
+        });
 
-            modalNextBtn.addEventListener('click', function() {
-                currentImageIndex = (currentImageIndex + 1) % thumbnails.length;
-                modalImage.src = imageUrls[currentImageIndex];
-                resetImage();
-                updateMainImage(currentImageIndex);
-            });
-        }
+        modalNextBtn.addEventListener('click', function () {
+            currentImageIndex = (currentImageIndex + 1) % thumbnails.length;
+            modalImage.src = imageUrls[currentImageIndex];
+            resetImage();
+            updateMainImage(currentImageIndex);
+        });
 
-        // Fechar modal
-        closeModal.addEventListener('click', function() {
+        closeModal.addEventListener('click', function () {
             imageModal.classList.remove('active');
             resetImage();
         });
@@ -145,8 +125,7 @@ window.addEventListener('load', function() {
     const quotationForm = document.getElementById('quotationForm');
 
     if (quotationButton && quotationModal && quotationForm) {
-        // Abrir modal de cotação
-        quotationButton.addEventListener('click', function(e) {
+        quotationButton.addEventListener('click', function (e) {
             e.preventDefault();
             document.getElementById('quotationProductImage').src = mainImage.src;
             document.getElementById('quotationProductName').textContent = document.querySelector('h1').textContent;
@@ -154,68 +133,47 @@ window.addEventListener('load', function() {
             quotationModal.classList.add('active');
         });
 
-        // Envio do formulário
-        quotationForm.addEventListener('submit', async function(e) {
+        quotationForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-            
-            // Mostra loading
+
             const submitButton = quotationForm.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.innerHTML;
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
             submitButton.disabled = true;
-        
+
             try {
-                const formData = new FormData();
-                
-                // Adiciona os campos manualmente
-                formData.append('name', document.getElementById('name').value);
-                formData.append('email', document.getElementById('email').value);
-                formData.append('phone', document.getElementById('phone').value);
-                formData.append('company', document.getElementById('company').value);
-                formData.append('message', document.getElementById('message').value);
+                const formData = new FormData(quotationForm);
                 formData.append('product_name', document.querySelector('h1').textContent);
                 formData.append('product_category', document.querySelector('.produto-categoria').textContent);
-                formData.append('product_image_url', mainImage.src.split('/').pop());
-                formData.append('quantity', document.getElementById('quantity').value);
-        
-                // Adiciona logs para debug
-                console.log('Enviando dados:', Object.fromEntries(formData));
-        
+                formData.append('product_image_url', mainImage.src);
+
                 const response = await fetch('/enviar-cotacao', {
                     method: 'POST',
                     body: formData
                 });
-        
-                console.log('Status da resposta:', response.status);
-                const data = await response.json();
-                console.log('Resposta:', data);
-        
+
                 if (response.ok) {
-                    alert('Cotação enviada com sucesso! Você receberá um email de confirmação em breve.');
+                    alert('Cotação enviada com sucesso! Você receberá um email em breve.');
                     quotationForm.reset();
                     quotationModal.classList.remove('active');
                 } else {
-                    throw new Error(data.error || 'Erro ao enviar cotação');
+                    throw new Error('Erro ao enviar cotação.');
                 }
             } catch (error) {
-                console.error('Erro detalhado:', error);
-                alert('Erro ao enviar cotação. Por favor, tente novamente ou entre em contato por telefone.');
+                alert('Erro ao enviar cotação. Por favor, tente novamente.');
+                console.error(error);
             } finally {
                 submitButton.innerHTML = originalButtonText;
                 submitButton.disabled = false;
             }
         });
 
-        // Fechar cotação
-        if (closeQuotationForm) {
-            closeQuotationForm.addEventListener('click', function() {
-                quotationModal.classList.remove('active');
-            });
-        }
+        closeQuotationForm.addEventListener('click', function () {
+            quotationModal.classList.remove('active');
+        });
     }
 
-    // === EVENTOS GLOBAIS ===
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             imageModal?.classList.remove('active');
             quotationModal?.classList.remove('active');
@@ -223,7 +181,7 @@ window.addEventListener('load', function() {
         }
     });
 
-    window.addEventListener('click', function(e) {
+    window.addEventListener('click', function (e) {
         if (e.target === imageModal) {
             imageModal.classList.remove('active');
             resetImage();
