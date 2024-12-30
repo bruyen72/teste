@@ -1,98 +1,85 @@
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Script carregado com sucesso e DOM pronto.');
+// Adicione isso dentro do bloco do formulário de cotação, após os outros eventos
+const quotationForm = document.getElementById('quotationForm');
 
-    // === Menu Mobile ===
-    const mobileToggle = document.querySelector('.mobile-toggle');
-    const navMenu = document.querySelector('.nav-menu');
+if (quotationForm) {
+    quotationForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    if (mobileToggle && navMenu) {
-        mobileToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
-            mobileToggle.classList.toggle('active');
-            console.log('Menu Mobile: Toggled');
-        });
+        // Captura os dados do formulário
+        const formData = new FormData(quotationForm);
+        
+        // Adiciona informações adicionais do produto
+        formData.append('product_name', document.querySelector('h1').textContent);
+        formData.append('product_category', document.querySelector('.produto-categoria').textContent);
+        formData.append('product_image_url', mainImage.src.split('/').pop());
 
-        document.addEventListener('click', (e) => {
-            if (!mobileToggle.contains(e.target) && !navMenu.contains(e.target)) {
-                navMenu.classList.remove('active');
-                mobileToggle.classList.remove('active');
-                console.log('Menu Mobile: Fechado ao clicar fora');
+        // Altera o botão para loading
+        const submitButton = quotationForm.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+        submitButton.disabled = true;
+
+        try {
+            const response = await fetch('/enviar-cotacao', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Mostra mensagem de sucesso
+                alert('Cotação enviada com sucesso! Em breve entraremos em contato.');
+                quotationForm.reset();
+                quotationModal.classList.remove('active');
+            } else {
+                throw new Error(data.error || 'Erro ao enviar cotação');
+            }
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao enviar cotação. Por favor, tente novamente ou entre em contato por telefone.');
+        } finally {
+            // Restaura o botão
+            submitButton.innerHTML = originalButtonText;
+            submitButton.disabled = false;
+        }
+    });
+
+    // Máscara para telefone
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+                value = value.replace(/(\d)(\d{4})$/, '$1-$2');
+                e.target.value = value;
             }
         });
-    } else {
-        console.error('Menu Mobile: Elementos não encontrados.');
     }
 
-    // === Galeria de Imagens ===
-    const mainImage = document.getElementById('mainImage');
-    const thumbnails = document.querySelectorAll('.thumbnail');
-
-    if (mainImage && thumbnails.length > 0) {
-        thumbnails.forEach((thumb) => {
-            thumb.addEventListener('click', () => {
-                const imgSrc = thumb.getAttribute('data-img');
-                if (imgSrc) {
-                    mainImage.src = imgSrc;
-                    console.log(`Imagem principal atualizada para ${imgSrc}`);
-                }
-            });
+    // Validação do email
+    const emailInput = document.getElementById('email');
+    if (emailInput) {
+        emailInput.addEventListener('blur', (e) => {
+            const email = e.target.value;
+            const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            if (!isValid) {
+                emailInput.classList.add('invalid');
+                emailInput.setCustomValidity('Por favor, insira um email válido');
+            } else {
+                emailInput.classList.remove('invalid');
+                emailInput.setCustomValidity('');
+            }
         });
-    } else {
-        console.error('Galeria de imagens: Elementos não encontrados.');
     }
 
-    // === Modal de Imagem ===
-    const imageModal = document.getElementById('imageModal');
-    const modalImage = document.getElementById('modalImage');
-    const closeModal = document.getElementById('closeModal');
-    const modalPrevBtn = document.getElementById('modalPrevBtn');
-    const modalNextBtn = document.getElementById('modalNextBtn');
-    let currentIndex = 0;
-
-    if (mainImage && imageModal && modalImage) {
-        mainImage.addEventListener('click', () => {
-            modalImage.src = mainImage.src;
-            imageModal.classList.add('active');
-            console.log('Modal de imagem aberto');
+    // Habilita/desabilita botão com base na validação
+    const inputs = quotationForm.querySelectorAll('input[required], textarea[required]');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            const isFormValid = Array.from(inputs).every(input => input.value.trim() !== '');
+            submitButton.disabled = !isFormValid;
         });
-
-        closeModal.addEventListener('click', () => {
-            imageModal.classList.remove('active');
-            console.log('Modal de imagem fechado');
-        });
-
-        modalPrevBtn.addEventListener('click', () => {
-            currentIndex = (currentIndex - 1 + thumbnails.length) % thumbnails.length;
-            modalImage.src = thumbnails[currentIndex].getAttribute('data-img');
-            console.log(`Imagem anterior exibida no modal. Índice: ${currentIndex}`);
-        });
-
-        modalNextBtn.addEventListener('click', () => {
-            currentIndex = (currentIndex + 1) % thumbnails.length;
-            modalImage.src = thumbnails[currentIndex].getAttribute('data-img');
-            console.log(`Próxima imagem exibida no modal. Índice: ${currentIndex}`);
-        });
-    } else {
-        console.error('Modal de imagem: Elementos não encontrados.');
-    }
-
-    // === Formulário de Cotação ===
-    const quotationModal = document.getElementById('quotationModal');
-    const quotationButton = document.getElementById('quotationButton');
-    const closeQuotationForm = document.getElementById('closeQuotationForm');
-
-    if (quotationButton && quotationModal) {
-        quotationButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            quotationModal.classList.add('active');
-            console.log('Modal de cotação aberto');
-        });
-
-        closeQuotationForm.addEventListener('click', () => {
-            quotationModal.classList.remove('active');
-            console.log('Modal de cotação fechado');
-        });
-    } else {
-        console.error('Formulário de cotação: Elementos não encontrados.');
-    }
-});
+    });
+}
