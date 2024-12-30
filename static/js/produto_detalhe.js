@@ -1,3 +1,4 @@
+// Quando a página carregar
 window.addEventListener('load', function () {
     console.log('Página carregada');
 
@@ -6,7 +7,8 @@ window.addEventListener('load', function () {
     const navMenu = document.querySelector('.nav-menu');
 
     if (mobileToggle && navMenu) {
-        mobileToggle.addEventListener('click', function () {
+        mobileToggle.addEventListener('click', function (e) {
+            e.preventDefault();
             mobileToggle.classList.toggle('active');
             navMenu.classList.toggle('active');
         });
@@ -74,6 +76,18 @@ window.addEventListener('load', function () {
             resetImage();
         });
 
+        modalContent.addEventListener('click', function (e) {
+            if (e.target === modalImage) {
+                isZoomed = !isZoomed;
+                if (isZoomed) {
+                    modalContent.style.cursor = 'grab';
+                    modalImage.style.transform = 'scale(2)';
+                } else {
+                    resetImage();
+                }
+            }
+        });
+
         modalContent.addEventListener('mousedown', function (e) {
             if (isZoomed) {
                 isDragging = true;
@@ -98,19 +112,21 @@ window.addEventListener('load', function () {
             }
         });
 
-        modalPrevBtn.addEventListener('click', function () {
-            currentImageIndex = (currentImageIndex - 1 + thumbnails.length) % thumbnails.length;
-            modalImage.src = imageUrls[currentImageIndex];
-            resetImage();
-            updateMainImage(currentImageIndex);
-        });
+        if (thumbnails.length > 1) {
+            modalPrevBtn.addEventListener('click', function () {
+                currentImageIndex = (currentImageIndex - 1 + thumbnails.length) % thumbnails.length;
+                modalImage.src = imageUrls[currentImageIndex];
+                resetImage();
+                updateMainImage(currentImageIndex);
+            });
 
-        modalNextBtn.addEventListener('click', function () {
-            currentImageIndex = (currentImageIndex + 1) % thumbnails.length;
-            modalImage.src = imageUrls[currentImageIndex];
-            resetImage();
-            updateMainImage(currentImageIndex);
-        });
+            modalNextBtn.addEventListener('click', function () {
+                currentImageIndex = (currentImageIndex + 1) % thumbnails.length;
+                modalImage.src = imageUrls[currentImageIndex];
+                resetImage();
+                updateMainImage(currentImageIndex);
+            });
+        }
 
         closeModal.addEventListener('click', function () {
             imageModal.classList.remove('active');
@@ -135,7 +151,6 @@ window.addEventListener('load', function () {
 
         quotationForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-
             const submitButton = quotationForm.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.innerHTML;
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
@@ -152,16 +167,18 @@ window.addEventListener('load', function () {
                     body: formData
                 });
 
+                const data = await response.json();
+
                 if (response.ok) {
-                    alert('Cotação enviada com sucesso! Você receberá um email em breve.');
+                    alert('Cotação enviada com sucesso! Você receberá um email de confirmação em breve.');
                     quotationForm.reset();
                     quotationModal.classList.remove('active');
                 } else {
-                    throw new Error('Erro ao enviar cotação.');
+                    throw new Error(data.error || 'Erro ao enviar cotação');
                 }
             } catch (error) {
+                console.error('Erro ao enviar:', error);
                 alert('Erro ao enviar cotação. Por favor, tente novamente.');
-                console.error(error);
             } finally {
                 submitButton.innerHTML = originalButtonText;
                 submitButton.disabled = false;
@@ -173,6 +190,7 @@ window.addEventListener('load', function () {
         });
     }
 
+    // === EVENTOS GLOBAIS ===
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             imageModal?.classList.remove('active');
