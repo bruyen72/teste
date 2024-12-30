@@ -202,6 +202,12 @@ def produto_detalhe(id):
 @app.route('/enviar-cotacao', methods=['POST'])
 def enviar_cotacao():
     try:
+        # Validação dos campos obrigatórios
+        required_fields = ['name', 'email', 'phone', 'product_name', 'product_category']
+        for field in required_fields:
+            if not request.form.get(field):
+                return jsonify({'error': f'Campo {field} é obrigatório'}), 400
+
         dados = {
             'nome': request.form.get('name', '').strip(),
             'email': request.form.get('email', '').strip(),
@@ -214,6 +220,38 @@ def enviar_cotacao():
             'data': datetime.now().strftime('%d/%m/%Y às %H:%M')
         }
 
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 5px;">
+                <h2 style="color: #00A859; border-bottom: 2px solid #00A859; padding-bottom: 10px;">Nova Solicitação de Cotação</h2>
+                
+                <h3 style="color: #444;">Dados do Cliente</h3>
+                <p><strong>Nome:</strong> {dados['nome']}<br>
+                <strong>Email:</strong> {dados['email']}<br>
+                <strong>Telefone:</strong> {dados['telefone']}<br>
+                <strong>Empresa:</strong> {dados['empresa']}</p>
+
+                <div style="background: #fff; padding: 15px; border-left: 4px solid #00A859; margin: 20px 0;">
+                    <h3 style="color: #444; margin-top: 0;">Produto Solicitado</h3>
+                    <p><strong>Produto:</strong> {dados['produto']}<br>
+                    <strong>Categoria:</strong> {dados['categoria']}<br>
+                    <strong>Quantidade:</strong> {dados['quantidade']}</p>
+                </div>
+
+                <div style="background: #fff; padding: 15px; margin: 20px 0;">
+                    <h3 style="color: #444; margin-top: 0;">Mensagem</h3>
+                    <p>{dados['mensagem'] or 'Nenhuma mensagem adicional.'}</p>
+                </div>
+
+                <p style="color: #666; font-style: italic; text-align: right;">
+                    Solicitação recebida em {dados['data']}
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
         # Criar mensagem de email
         msg = MIMEMultipart('alternative')
         msg['Subject'] = f'Nova Cotação - {dados["produto"]}'
@@ -222,51 +260,10 @@ def enviar_cotacao():
         msg['Date'] = formatdate(localtime=True)
         msg.add_header('Reply-To', dados['email'])
 
-        # Template de email sem imagem
-        html_content = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; padding: 20px;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 5px;">
-                <h2 style="color: #00A859; border-bottom: 2px solid #00A859; padding-bottom: 10px;">Nova Solicitação de Cotação</h2>
-                
-                <div style="background: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <h3 style="color: #444; margin-top: 0;">Dados do Cliente</h3>
-                    <p><strong>Nome:</strong> {dados['nome']}<br>
-                    <strong>Email:</strong> {dados['email']}<br>
-                    <strong>Telefone:</strong> {dados['telefone']}<br>
-                    <strong>Empresa:</strong> {dados['empresa']}</p>
-                </div>
-
-                <div style="background: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <h3 style="color: #444; margin-top: 0;">Produto Solicitado</h3>
-                    <p><strong>Produto:</strong> {dados['produto']}<br>
-                    <strong>Categoria:</strong> {dados['categoria']}<br>
-                    <strong>Quantidade:</strong> {dados['quantidade']}</p>
-                </div>
-
-                <div style="background: #fff; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <h3 style="color: #444; margin-top: 0;">Mensagem do Cliente</h3>
-                    <p>{dados['mensagem'] if dados['mensagem'] else 'Nenhuma mensagem adicional.'}</p>
-                </div>
-
-                <p style="color: #666; font-style: italic;">
-                    Solicitação recebida em {dados['data']}
-                </p>
-
-                <div style="border-top: 2px solid #eee; margin-top: 20px; padding-top: 20px; text-align: center;">
-                    <p style="color: #00A859; font-weight: bold;">TecPoint Soluções em Comunicação</p>
-                    <p>Tel: (11) 4508-7767 | Cel: (11) 99403-6111<br>
-                    www.tecpoint.net.br</p>
-                </div>
-            </div>
-        </body>
-        </html>
-        """
-
         # Anexar conteúdo HTML
         msg.attach(MIMEText(html_content, 'html', 'utf-8'))
 
-        # Enviar email
+        # Enviar email usando as configurações globais
         with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
             server.ehlo()
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
@@ -274,8 +271,11 @@ def enviar_cotacao():
 
         return jsonify({'message': 'Cotação enviada com sucesso!'}), 200
 
+    except smtplib.SMTPException as smtp_error:
+        print(f'Erro SMTP ao enviar cotação: {smtp_error}')
+        return jsonify({'error': 'Erro no servidor de email. Tente novamente mais tarde.'}), 500
     except Exception as e:
-        print(f'Erro ao enviar cotação: {e}')
+        print(f'Erro geral ao enviar cotação: {e}')
         return jsonify({'error': 'Ocorreu um erro inesperado'}), 500
 
 def is_valid_email(email):
