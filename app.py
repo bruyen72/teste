@@ -202,6 +202,12 @@ def produto_detalhe(id):
 @app.route('/enviar-cotacao', methods=['POST'])
 def enviar_cotacao():
     try:
+        # Validação dos campos obrigatórios
+        required_fields = ['name', 'email', 'phone', 'product_name', 'product_category']
+        for field in required_fields:
+            if not request.form.get(field):
+                return jsonify({'error': f'Campo {field} é obrigatório'}), 400
+
         dados = {
             'nome': request.form.get('name', '').strip(),
             'email': request.form.get('email', '').strip(),
@@ -213,19 +219,6 @@ def enviar_cotacao():
             'mensagem': request.form.get('message', '').strip(),
             'data': datetime.now().strftime('%d/%m/%Y às %H:%M')
         }
-
-        # Cria a mensagem apenas com conteúdo HTML simples
-        msg = MIMEMultipart('related')  # Mudando para 'related' em vez de 'alternative'
-        msg['Subject'] = f'Nova Cotação - {dados["produto"]}'
-        msg['From'] = SMTP_USERNAME
-        msg['To'] = SMTP_USERNAME
-        msg['Date'] = email.utils.formatdate(localtime=True)
-
-        # Exibe nome amigável no FROM
-        msg['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
-
-        # Adiciona cabeçalho de Reply-To para facilitar respostas
-        msg.add_header('Reply-To', dados['email'])
 
         html_content = f"""
         <html>
@@ -248,35 +241,42 @@ def enviar_cotacao():
 
                 <div style="background: #fff; padding: 15px; margin: 20px 0;">
                     <h3 style="color: #444; margin-top: 0;">Mensagem</h3>
-                    <p>{dados['mensagem']}</p>
+                    <p>{dados['mensagem'] or 'Nenhuma mensagem adicional.'}</p>
                 </div>
 
                 <p style="color: #666; font-style: italic; text-align: right;">
                     Solicitação recebida em {dados['data']}
                 </p>
-
-                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="color: #00A859; font-weight: bold;">TecPoint Soluções em Comunicação</p>
-                    <p>Tel: (11) 4508-7767 | Cel: (11) 99403-6111<br>
-                    www.tecpoint.net.br</p>
-                </div>
             </div>
         </body>
         </html>
         """
 
+        # Criar mensagem de email
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f'Nova Cotação - {dados["produto"]}'
+        msg['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
+        msg['To'] = SMTP_USERNAME
+        msg['Date'] = formatdate(localtime=True)
+        msg.add_header('Reply-To', dados['email'])
+
+        # Anexar conteúdo HTML
         msg.attach(MIMEText(html_content, 'html', 'utf-8'))
 
-        with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
+        # Enviar email usando as configurações globais
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
             server.ehlo()
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             server.send_message(msg)
 
         return jsonify({'message': 'Cotação enviada com sucesso!'}), 200
 
+    except smtplib.SMTPException as smtp_error:
+        print(f'Erro SMTP ao enviar cotação: {smtp_error}')
+        return jsonify({'error': 'Erro no servidor de email. Tente novamente mais tarde.'}), 500
     except Exception as e:
-        print(f'Erro: {e}')
-        return jsonify({'error': 'Erro ao enviar'}), 500
+        print(f'Erro geral ao enviar cotação: {e}')
+        return jsonify({'error': 'Ocorreu um erro inesperado'}), 500
 
 # Funções auxiliares
 

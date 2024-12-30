@@ -151,35 +151,34 @@ window.addEventListener('load', function () {
 
         quotationForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-
+        
             const submitButton = quotationForm.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.innerHTML;
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
             submitButton.disabled = true;
-
+        
             try {
                 const formData = new FormData(quotationForm);
                 formData.append('product_name', document.querySelector('h1').textContent);
                 formData.append('product_category', document.querySelector('.produto-categoria').textContent);
-                formData.append('product_image_url', mainImage.src);
-
+        
                 const response = await fetch('/enviar-cotacao', {
                     method: 'POST',
                     body: formData
                 });
-
+        
+                const data = await response.json();
+                
                 if (response.ok) {
-                    const data = await response.json();
                     alert(data.message);
                     quotationForm.reset();
                     quotationModal.classList.remove('active');
                 } else {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Erro ao enviar cotação');
+                    throw new Error(data.error || 'Erro ao enviar cotação');
                 }
             } catch (error) {
                 console.error('Erro:', error);
-                alert('Erro ao enviar cotação. Por favor, tente novamente ou entre em contato por telefone.');
+                alert(error.message || 'Erro ao enviar cotação. Por favor, tente novamente.');
             } finally {
                 submitButton.innerHTML = originalButtonText;
                 submitButton.disabled = false;
