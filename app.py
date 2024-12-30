@@ -261,52 +261,65 @@ def enviar_cotacao():
 # Funções auxiliares
 
 # email do index.html
-@app.route('/enviar-contato-site', methods=['POST'])
-def enviar_contato_site():
+@app.route('/enviar-cotacao', methods=['POST'])
+def enviar_cotacao():
     try:
-        # Captura dos dados do cliente
-        dados = request.get_json()
-        
-        # Validação dos dados
-        if not all(key in dados for key in ['name', 'email', 'phone', 'message']):
-            return jsonify({'error': 'Todos os campos são obrigatórios'}), 400
+        # Captura os dados enviados pelo formulário
+        dados = {
+            'nome': request.form.get('name', '').strip(),
+            'email': request.form.get('email', '').strip(),
+            'telefone': request.form.get('phone', '').strip(),
+            'empresa': request.form.get('company', 'Não informada').strip(),
+            'produto': request.form.get('product_name', '').strip(),
+            'categoria': request.form.get('product_category', '').strip(),
+            'quantidade': request.form.get('quantity', '1').strip(),
+            'mensagem': request.form.get('message', '').strip(),
+            'data': datetime.now().strftime('%d/%m/%Y às %H:%M')
+        }
 
-        # Criação da mensagem
-        msg = MIMEText(f"""
-NOVA MENSAGEM DO SITE:
-
-Nome: {dados['name']}
-Email: {dados['email']}
-Telefone: {dados['phone']}
-
-Mensagem:
-{dados['message']}
-
---
-Enviado através do formulário da página inicial
-""", 'plain', 'utf-8')
-        
-        msg['Subject'] = 'Nova Mensagem - Site TecPoint'
-        msg['From'] = formataddr(("TecPoint Contato", SMTP_USERNAME))
-        msg['To'] = SMTP_USERNAME
-        
-        # Adiciona cabeçalho de Reply-To para facilitar respostas
+        # Configura a mensagem de e-mail
+        msg = MIMEMultipart('related')
+        msg['Subject'] = f'Nova Cotação - {dados["produto"]}'
+        msg['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
+        msg['To'] = SMTP_USERNAME  # O e-mail do destinatário (pode ser o mesmo para testes)
         msg.add_header('Reply-To', dados['email'])
 
-        # Envio do e-mail
-        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
-            server.ehlo()
+        # Conteúdo do e-mail em HTML
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; color: #333;">
+            <h2 style="color: #00A859;">Nova Solicitação de Cotação</h2>
+            <p><strong>Nome:</strong> {dados['nome']}<br>
+            <strong>Email:</strong> {dados['email']}<br>
+            <strong>Telefone:</strong> {dados['telefone']}<br>
+            <strong>Empresa:</strong> {dados['empresa']}<br>
+            <strong>Produto:</strong> {dados['produto']}<br>
+            <strong>Categoria:</strong> {dados['categoria']}<br>
+            <strong>Quantidade:</strong> {dados['quantidade']}<br>
+            <strong>Mensagem:</strong><br>{dados['mensagem']}</p>
+            <hr>
+            <p style="font-size: 0.9em; color: #666;">Recebido em: {dados['data']}</p>
+        </body>
+        </html>
+        """
+        msg.attach(MIMEText(html_content, 'html', 'utf-8'))
+
+        # Envia o e-mail usando o servidor SMTP
+        with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
+            server.ehlo()  # Identifica a conexão
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             server.send_message(msg)
-        
-        return jsonify({'message': 'Mensagem enviada com sucesso!'}), 200
+
+        return jsonify({'message': 'Cotação enviada com sucesso!'}), 200
 
     except smtplib.SMTPException as smtp_error:
-        print(f'Erro SMTP ao enviar email do site: {smtp_error}')
-        return jsonify({'error': 'Erro no envio de e-mail, tente novamente mais tarde'}), 500
+        print(f"Erro SMTP: {smtp_error}")
+        return jsonify({'error': 'Erro ao enviar. Verifique as configurações de e-mail.'}), 500
+
     except Exception as e:
-        print(f'Erro geral: {e}')
-        return jsonify({'error': 'Ocorreu um erro inesperado'}), 500
+        print(f"Erro geral: {e}")
+        return jsonify({'error': 'Erro inesperado ao enviar a cotação.'}), 500
+
 
 def is_valid_email(email):
     """Valida formato básico do email"""
