@@ -214,69 +214,49 @@ def enviar_cotacao():
             'data': datetime.now().strftime('%d/%m/%Y às %H:%M')
         }
 
-        # Cria a mensagem apenas com conteúdo HTML simples
-        msg = MIMEMultipart('related')  # Mudando para 'related' em vez de 'alternative'
+        # Validação básica de e-mail
+        if not dados['email']:
+            return jsonify({'error': 'E-mail inválido'}), 400
+
+        # Criar a mensagem de e-mail
+        msg = MIMEMultipart('alternative')
         msg['Subject'] = f'Nova Cotação - {dados["produto"]}'
-        msg['From'] = SMTP_USERNAME
-        msg['To'] = SMTP_USERNAME
-        msg['Date'] = email.utils.formatdate(localtime=True)
-
-        # Exibe nome amigável no FROM
         msg['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
-
-        # Adiciona cabeçalho de Reply-To para facilitar respostas
+        msg['To'] = SMTP_USERNAME
         msg.add_header('Reply-To', dados['email'])
 
         html_content = f"""
         <html>
-        <body style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 5px;">
-                <h2 style="color: #00A859; border-bottom: 2px solid #00A859; padding-bottom: 10px;">Nova Solicitação de Cotação</h2>
-                
-                <h3 style="color: #444;">Dados do Cliente</h3>
-                <p><strong>Nome:</strong> {dados['nome']}<br>
-                <strong>Email:</strong> {dados['email']}<br>
-                <strong>Telefone:</strong> {dados['telefone']}<br>
-                <strong>Empresa:</strong> {dados['empresa']}</p>
-
-                <div style="background: #fff; padding: 15px; border-left: 4px solid #00A859; margin: 20px 0;">
-                    <h3 style="color: #444; margin-top: 0;">Produto Solicitado</h3>
-                    <p><strong>Produto:</strong> {dados['produto']}<br>
-                    <strong>Categoria:</strong> {dados['categoria']}<br>
-                    <strong>Quantidade:</strong> {dados['quantidade']}</p>
-                </div>
-
-                <div style="background: #fff; padding: 15px; margin: 20px 0;">
-                    <h3 style="color: #444; margin-top: 0;">Mensagem</h3>
-                    <p>{dados['mensagem']}</p>
-                </div>
-
-                <p style="color: #666; font-style: italic; text-align: right;">
-                    Solicitação recebida em {dados['data']}
-                </p>
-
-                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                    <p style="color: #00A859; font-weight: bold;">TecPoint Soluções em Comunicação</p>
-                    <p>Tel: (11) 4508-7767 | Cel: (11) 99403-6111<br>
-                    www.tecpoint.net.br</p>
-                </div>
-            </div>
+        <body>
+            <h2>Nova Solicitação de Cotação</h2>
+            <p><strong>Nome:</strong> {dados['nome']}</p>
+            <p><strong>Email:</strong> {dados['email']}</p>
+            <p><strong>Telefone:</strong> {dados['telefone']}</p>
+            <p><strong>Empresa:</strong> {dados['empresa']}</p>
+            <p><strong>Produto:</strong> {dados['produto']}</p>
+            <p><strong>Categoria:</strong> {dados['categoria']}</p>
+            <p><strong>Quantidade:</strong> {dados['quantidade']}</p>
+            <p><strong>Mensagem:</strong> {dados['mensagem']}</p>
+            <p><em>Solicitação recebida em {dados['data']}</em></p>
         </body>
         </html>
         """
 
-        msg.attach(MIMEText(html_content, 'html', 'utf-8'))
+        msg.attach(MIMEText(html_content, 'html'))
 
+        # Enviar o e-mail
         with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
-            server.ehlo()
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             server.send_message(msg)
 
         return jsonify({'message': 'Cotação enviada com sucesso!'}), 200
 
+    except smtplib.SMTPException as e:
+        print(f'Erro SMTP: {e}')
+        return jsonify({'error': 'Erro ao enviar e-mail'}), 500
     except Exception as e:
-        print(f'Erro: {e}')
-        return jsonify({'error': 'Erro ao enviar'}), 500
+        print(f'Erro geral: {e}')
+        return jsonify({'error': 'Erro inesperado'}), 500
 
 # Funções auxiliares
 
