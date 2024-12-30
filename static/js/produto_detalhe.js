@@ -1,4 +1,3 @@
-// Quando a página carregar
 window.addEventListener('load', function () {
     console.log('Página carregada');
 
@@ -13,6 +12,7 @@ window.addEventListener('load', function () {
             navMenu.classList.toggle('active');
         });
 
+        // Fecha menu ao clicar em um link
         navMenu.querySelectorAll('.nav-link').forEach(link => {
             link.addEventListener('click', () => {
                 mobileToggle.classList.remove('active');
@@ -151,6 +151,7 @@ window.addEventListener('load', function () {
 
         quotationForm.addEventListener('submit', async function (e) {
             e.preventDefault();
+
             const submitButton = quotationForm.querySelector('button[type="submit"]');
             const originalButtonText = submitButton.innerHTML;
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
@@ -167,30 +168,31 @@ window.addEventListener('load', function () {
                     body: formData
                 });
 
-                const data = await response.json();
-
                 if (response.ok) {
-                    alert('Cotação enviada com sucesso! Você receberá um email de confirmação em breve.');
+                    const data = await response.json();
+                    alert(data.message);
                     quotationForm.reset();
                     quotationModal.classList.remove('active');
                 } else {
-                    throw new Error(data.error || 'Erro ao enviar cotação');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erro ao enviar cotação');
                 }
             } catch (error) {
-                console.error('Erro ao enviar:', error);
-                alert('Erro ao enviar cotação. Por favor, tente novamente.');
+                console.error('Erro:', error);
+                alert('Erro ao enviar cotação. Por favor, tente novamente ou entre em contato por telefone.');
             } finally {
                 submitButton.innerHTML = originalButtonText;
                 submitButton.disabled = false;
             }
         });
 
-        closeQuotationForm.addEventListener('click', function () {
-            quotationModal.classList.remove('active');
-        });
+        if (closeQuotationForm) {
+            closeQuotationForm.addEventListener('click', function () {
+                quotationModal.classList.remove('active');
+            });
+        }
     }
 
-    // === EVENTOS GLOBAIS ===
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
             imageModal?.classList.remove('active');
