@@ -214,112 +214,119 @@ def enviar_cotacao():
             'data': datetime.now().strftime('%d/%m/%Y às %H:%M')
         }
 
-        # Validação básica de e-mail
-        if not dados['email']:
-            return jsonify({'error': 'E-mail inválido'}), 400
-
-        # Criar a mensagem de e-mail
-        msg = MIMEMultipart('alternative')
+        # Cria a mensagem apenas com conteúdo HTML simples
+        msg = MIMEMultipart('related')  # Mudando para 'related' em vez de 'alternative'
         msg['Subject'] = f'Nova Cotação - {dados["produto"]}'
-        msg['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
+        msg['From'] = SMTP_USERNAME
         msg['To'] = SMTP_USERNAME
+        msg['Date'] = email.utils.formatdate(localtime=True)
+
+        # Exibe nome amigável no FROM
+        msg['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
+
+        # Adiciona cabeçalho de Reply-To para facilitar respostas
         msg.add_header('Reply-To', dados['email'])
 
         html_content = f"""
         <html>
-        <body>
-            <h2>Nova Solicitação de Cotação</h2>
-            <p><strong>Nome:</strong> {dados['nome']}</p>
-            <p><strong>Email:</strong> {dados['email']}</p>
-            <p><strong>Telefone:</strong> {dados['telefone']}</p>
-            <p><strong>Empresa:</strong> {dados['empresa']}</p>
-            <p><strong>Produto:</strong> {dados['produto']}</p>
-            <p><strong>Categoria:</strong> {dados['categoria']}</p>
-            <p><strong>Quantidade:</strong> {dados['quantidade']}</p>
-            <p><strong>Mensagem:</strong> {dados['mensagem']}</p>
-            <p><em>Solicitação recebida em {dados['data']}</em></p>
+        <body style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 5px;">
+                <h2 style="color: #00A859; border-bottom: 2px solid #00A859; padding-bottom: 10px;">Nova Solicitação de Cotação</h2>
+                
+                <h3 style="color: #444;">Dados do Cliente</h3>
+                <p><strong>Nome:</strong> {dados['nome']}<br>
+                <strong>Email:</strong> {dados['email']}<br>
+                <strong>Telefone:</strong> {dados['telefone']}<br>
+                <strong>Empresa:</strong> {dados['empresa']}</p>
+
+                <div style="background: #fff; padding: 15px; border-left: 4px solid #00A859; margin: 20px 0;">
+                    <h3 style="color: #444; margin-top: 0;">Produto Solicitado</h3>
+                    <p><strong>Produto:</strong> {dados['produto']}<br>
+                    <strong>Categoria:</strong> {dados['categoria']}<br>
+                    <strong>Quantidade:</strong> {dados['quantidade']}</p>
+                </div>
+
+                <div style="background: #fff; padding: 15px; margin: 20px 0;">
+                    <h3 style="color: #444; margin-top: 0;">Mensagem</h3>
+                    <p>{dados['mensagem']}</p>
+                </div>
+
+                <p style="color: #666; font-style: italic; text-align: right;">
+                    Solicitação recebida em {dados['data']}
+                </p>
+
+                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <p style="color: #00A859; font-weight: bold;">TecPoint Soluções em Comunicação</p>
+                    <p>Tel: (11) 4508-7767 | Cel: (11) 99403-6111<br>
+                    www.tecpoint.net.br</p>
+                </div>
+            </div>
         </body>
         </html>
         """
 
-        msg.attach(MIMEText(html_content, 'html'))
+        msg.attach(MIMEText(html_content, 'html', 'utf-8'))
 
-        # Enviar o e-mail
         with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
+            server.ehlo()
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             server.send_message(msg)
 
         return jsonify({'message': 'Cotação enviada com sucesso!'}), 200
 
-    except smtplib.SMTPException as e:
-        print(f'Erro SMTP: {e}')
-        return jsonify({'error': 'Erro ao enviar e-mail'}), 500
     except Exception as e:
-        print(f'Erro geral: {e}')
-        return jsonify({'error': 'Erro inesperado'}), 500
+        print(f'Erro: {e}')
+        return jsonify({'error': 'Erro ao enviar'}), 500
 
 # Funções auxiliares
 
 # email do index.html
-@app.route('/enviar-cotacao', methods=['POST'])
-def enviar_cotacao():
+@app.route('/enviar-contato-site', methods=['POST'])
+def enviar_contato_site():
     try:
-        # Captura os dados enviados pelo formulário
-        dados = {
-            'nome': request.form.get('name', '').strip(),
-            'email': request.form.get('email', '').strip(),
-            'telefone': request.form.get('phone', '').strip(),
-            'empresa': request.form.get('company', 'Não informada').strip(),
-            'produto': request.form.get('product_name', '').strip(),
-            'categoria': request.form.get('product_category', '').strip(),
-            'quantidade': request.form.get('quantity', '1').strip(),
-            'mensagem': request.form.get('message', '').strip(),
-            'data': datetime.now().strftime('%d/%m/%Y às %H:%M')
-        }
+        # Captura dos dados do cliente
+        dados = request.get_json()
+        
+        # Validação dos dados
+        if not all(key in dados for key in ['name', 'email', 'phone', 'message']):
+            return jsonify({'error': 'Todos os campos são obrigatórios'}), 400
 
-        # Configura a mensagem de e-mail
-        msg = MIMEMultipart('related')
-        msg['Subject'] = f'Nova Cotação - {dados["produto"]}'
-        msg['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
-        msg['To'] = SMTP_USERNAME  # O e-mail do destinatário (pode ser o mesmo para testes)
+        # Criação da mensagem
+        msg = MIMEText(f"""
+NOVA MENSAGEM DO SITE:
+
+Nome: {dados['name']}
+Email: {dados['email']}
+Telefone: {dados['phone']}
+
+Mensagem:
+{dados['message']}
+
+--
+Enviado através do formulário da página inicial
+""", 'plain', 'utf-8')
+        
+        msg['Subject'] = 'Nova Mensagem - Site TecPoint'
+        msg['From'] = formataddr(("TecPoint Contato", SMTP_USERNAME))
+        msg['To'] = SMTP_USERNAME
+        
+        # Adiciona cabeçalho de Reply-To para facilitar respostas
         msg.add_header('Reply-To', dados['email'])
 
-        # Conteúdo do e-mail em HTML
-        html_content = f"""
-        <html>
-        <body style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; color: #333;">
-            <h2 style="color: #00A859;">Nova Solicitação de Cotação</h2>
-            <p><strong>Nome:</strong> {dados['nome']}<br>
-            <strong>Email:</strong> {dados['email']}<br>
-            <strong>Telefone:</strong> {dados['telefone']}<br>
-            <strong>Empresa:</strong> {dados['empresa']}<br>
-            <strong>Produto:</strong> {dados['produto']}<br>
-            <strong>Categoria:</strong> {dados['categoria']}<br>
-            <strong>Quantidade:</strong> {dados['quantidade']}<br>
-            <strong>Mensagem:</strong><br>{dados['mensagem']}</p>
-            <hr>
-            <p style="font-size: 0.9em; color: #666;">Recebido em: {dados['data']}</p>
-        </body>
-        </html>
-        """
-        msg.attach(MIMEText(html_content, 'html', 'utf-8'))
-
-        # Envia o e-mail usando o servidor SMTP
-        with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
-            server.ehlo()  # Identifica a conexão
+        # Envio do e-mail
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
+            server.ehlo()
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             server.send_message(msg)
-
-        return jsonify({'message': 'Cotação enviada com sucesso!'}), 200
+        
+        return jsonify({'message': 'Mensagem enviada com sucesso!'}), 200
 
     except smtplib.SMTPException as smtp_error:
-        print(f"Erro SMTP: {smtp_error}")
-        return jsonify({'error': 'Erro ao enviar. Verifique as configurações de e-mail.'}), 500
-
+        print(f'Erro SMTP ao enviar email do site: {smtp_error}')
+        return jsonify({'error': 'Erro no envio de e-mail, tente novamente mais tarde'}), 500
     except Exception as e:
-        print(f"Erro geral: {e}")
-        return jsonify({'error': 'Erro inesperado ao enviar a cotação.'}), 500
-
+        print(f'Erro geral: {e}')
+        return jsonify({'error': 'Ocorreu um erro inesperado'}), 500
 
 def is_valid_email(email):
     """Valida formato básico do email"""
