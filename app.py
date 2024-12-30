@@ -217,37 +217,171 @@ def enviar_cotacao():
             'categoria': request.form.get('product_category', '').strip(),
             'quantidade': request.form.get('quantity', '1').strip(),
             'mensagem': request.form.get('message', '').strip(),
-            'data': datetime.now().strftime('%d/%m/%Y às %H:%M')
+            'data': datetime.now().strftime('%d/%m/%Y às %H:%M'),
+            'produto_imagem': request.form.get('product_image_url', ''),
+            'hora': datetime.now().strftime('%H:%M')
         }
 
         html_content = f"""
+        <!DOCTYPE html>
         <html>
-        <body style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 5px;">
-                <h2 style="color: #00A859; border-bottom: 2px solid #00A859; padding-bottom: 10px;">Nova Solicitação de Cotação</h2>
-                
-                <h3 style="color: #444;">Dados do Cliente</h3>
-                <p><strong>Nome:</strong> {dados['nome']}<br>
-                <strong>Email:</strong> {dados['email']}<br>
-                <strong>Telefone:</strong> {dados['telefone']}<br>
-                <strong>Empresa:</strong> {dados['empresa']}</p>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Nova Cotação - TecPoint</title>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Inter', Arial, sans-serif; background-color: #f4f4f4; -webkit-font-smoothing: antialiased;">
+            <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f4f4f4;">
+                <tr>
+                    <td align="center" style="padding: 40px 0;">
+                        <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <!-- Header com Logo -->
+                            <tr>
+                                <td style="text-align: center; padding: 30px; background: linear-gradient(135deg, #00A859 0%, #008548 100%);">
+                                    <img src="https://www.tecpoint.net.br/static/LogoTecPoint.png" alt="TecPoint Logo" style="width: 180px; height: auto; margin-bottom: 20px;">
+                                    <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 600;">Nova Solicitação de Cotação</h1>
+                                    <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 14px;">
+                                        Recebida em {dados['data']}
+                                    </p>
+                                </td>
+                            </tr>
 
-                <div style="background: #fff; padding: 15px; border-left: 4px solid #00A859; margin: 20px 0;">
-                    <h3 style="color: #444; margin-top: 0;">Produto Solicitado</h3>
-                    <p><strong>Produto:</strong> {dados['produto']}<br>
-                    <strong>Categoria:</strong> {dados['categoria']}<br>
-                    <strong>Quantidade:</strong> {dados['quantidade']}</p>
-                </div>
+                            <!-- Status Banner -->
+                            <tr>
+                                <td style="background-color: #e8f5e9; padding: 15px; text-align: center; border-bottom: 1px solid #c8e6c9;">
+                                    <p style="margin: 0; color: #00A859; font-weight: 500;">
+                                        ✨ Nova solicitação recebida às {dados['hora']}
+                                    </p>
+                                </td>
+                            </tr>
 
-                <div style="background: #fff; padding: 15px; margin: 20px 0;">
-                    <h3 style="color: #444; margin-top: 0;">Mensagem</h3>
-                    <p>{dados['mensagem'] or 'Nenhuma mensagem adicional.'}</p>
-                </div>
+                            <!-- Informações do Cliente -->
+                            <tr>
+                                <td style="padding: 30px;">
+                                    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                        <tr>
+                                            <td>
+                                                <h2 style="color: #2d3748; margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">
+                                                    👤 Dados do Cliente
+                                                </h2>
+                                                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+                                                    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                                        <tr>
+                                                            <td style="padding: 8px 0;">
+                                                                <strong style="color: #00A859; font-weight: 500;">Nome:</strong>
+                                                                <span style="color: #4a5568; margin-left: 8px;">{dados['nome']}</span>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="padding: 8px 0;">
+                                                                <strong style="color: #00A859; font-weight: 500;">Email:</strong>
+                                                                <span style="color: #4a5568; margin-left: 8px;">{dados['email']}</span>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="padding: 8px 0;">
+                                                                <strong style="color: #00A859; font-weight: 500;">Telefone:</strong>
+                                                                <span style="color: #4a5568; margin-left: 8px;">{dados['telefone']}</span>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td style="padding: 8px 0;">
+                                                                <strong style="color: #00A859; font-weight: 500;">Empresa:</strong>
+                                                                <span style="color: #4a5568; margin-left: 8px;">{dados['empresa']}</span>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
 
-                <p style="color: #666; font-style: italic; text-align: right;">
-                    Solicitação recebida em {dados['data']}
-                </p>
-            </div>
+                            <!-- Detalhes do Produto -->
+                            <tr>
+                                <td style="padding: 0 30px 30px 30px;">
+                                    <h2 style="color: #2d3748; margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">
+                                        🛍️ Detalhes do Produto
+                                    </h2>
+                                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+                                        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                            <tr>
+                                                <td style="width: 120px; vertical-align: top;">
+                                                    <img src="{dados['produto_imagem']}" alt="{dados['produto']}" 
+                                                         style="width: 120px; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                                </td>
+                                                <td style="padding-left: 20px; vertical-align: top;">
+                                                    <h3 style="color: #00A859; margin: 0 0 12px 0; font-size: 18px; font-weight: 600;">
+                                                        {dados['produto']}
+                                                    </h3>
+                                                    <p style="margin: 0 0 8px 0; color: #4a5568;">
+                                                        <strong style="color: #2d3748;">Categoria:</strong> {dados['categoria']}
+                                                    </p>
+                                                    <p style="margin: 0; color: #4a5568;">
+                                                        <strong style="color: #2d3748;">Quantidade Solicitada:</strong> {dados['quantidade']} unidade(s)
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Mensagem do Cliente -->
+                            <tr>
+                                <td style="padding: 0 30px 30px 30px;">
+                                    <h2 style="color: #2d3748; margin: 0 0 20px 0; font-size: 18px; font-weight: 600;">
+                                        💬 Mensagem Adicional
+                                    </h2>
+                                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+                                        <p style="margin: 0; color: #4a5568; line-height: 1.6;">
+                                            {dados['mensagem'] if dados['mensagem'] else 'Nenhuma mensagem adicional fornecida.'}
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Call to Action -->
+                            <tr>
+                                <td style="padding: 0 30px 30px 30px;">
+                                    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                        <tr>
+                                            <td style="background-color: #f7f7f7; border-radius: 8px; padding: 20px; text-align: center;">
+                                                <p style="margin: 0 0 15px 0; color: #2d3748;">
+                                                    Responda diretamente a este email para entrar em contato com o cliente.
+                                                </p>
+                                                <a href="mailto:{dados['email']}" 
+                                                   style="background-color: #00A859; color: white; padding: 12px 24px; 
+                                                          text-decoration: none; border-radius: 6px; font-weight: 500; 
+                                                          display: inline-block;">
+                                                    Responder ao Cliente
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+
+                            <!-- Footer -->
+                            <tr>
+                                <td style="background-color: #1a1a1a; padding: 30px; text-align: center;">
+                                    <img src="https://www.tecpoint.net.br/static/LogoTecPoint.png" alt="TecPoint Logo" 
+                                         style="width: 140px; height: auto; margin-bottom: 20px;">
+                                    <p style="margin: 0 0 10px 0; color: #ffffff; font-size: 14px;">
+                                        TecPoint Soluções em Comunicação
+                                    </p>
+                                    <p style="margin: 0; color: #9ca3af; font-size: 14px;">
+                                        Tel: (11) 4508-7767 | Cel: (11) 99403-6111<br>
+                                        www.tecpoint.net.br
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
         </body>
         </html>
         """
@@ -263,7 +397,7 @@ def enviar_cotacao():
         # Anexar conteúdo HTML
         msg.attach(MIMEText(html_content, 'html', 'utf-8'))
 
-        # Enviar email usando as configurações globais
+        # Enviar email
         with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
             server.ehlo()
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
