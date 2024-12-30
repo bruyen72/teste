@@ -1,5 +1,5 @@
 window.addEventListener('load', function() {
-    console.log('Página carregada completamente');
+    console.log('Página carregada');
 
     // === MENU MOBILE ===
     const mobileToggle = document.querySelector('.mobile-toggle');
@@ -8,33 +8,7 @@ window.addEventListener('load', function() {
     if (mobileToggle && navMenu) {
         mobileToggle.addEventListener('click', function(e) {
             e.preventDefault();
-            e.stopPropagation();
-            
-            mobileToggle.classList.toggle('active');
             navMenu.classList.toggle('active');
-            
-            if (navMenu.classList.contains('active')) {
-                navMenu.style.opacity = '0';
-                navMenu.style.display = 'flex';
-                setTimeout(() => navMenu.style.opacity = '1', 10);
-            }
-        });
-
-        // Fecha ao clicar nos links
-        const navLinks = navMenu.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                navMenu.classList.remove('active');
-                mobileToggle.classList.remove('active');
-            });
-        });
-
-        // Fecha ao clicar fora
-        document.addEventListener('click', function(e) {
-            if (!mobileToggle.contains(e.target) && !navMenu.contains(e.target)) {
-                navMenu.classList.remove('active');
-                mobileToggle.classList.remove('active');
-            }
         });
     }
 
@@ -68,74 +42,30 @@ window.addEventListener('load', function() {
     const closeModal = document.getElementById('closeModal');
     const modalPrevBtn = document.getElementById('modalPrevBtn');
     const modalNextBtn = document.getElementById('modalNextBtn');
+    let isZoomed = false;
 
-    let scale = 1;
-    let translateX = 0;
-    let translateY = 0;
-    let isDragging = false;
-    let startX, startY;
-
-    function updateTransform() {
-        if (modalImage) {
-            modalImage.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-        }
-    }
-
-    function resetZoom() {
-        scale = 1;
-        translateX = 0;
-        translateY = 0;
-        updateTransform();
-        modalContent.classList.remove('zoomed');
-    }
-
-    if (mainImage && modalImage && modalContent) {
-        // Abrir modal
+    if (mainImage && modalImage) {
+        // Abre modal
         mainImage.addEventListener('click', function() {
             modalImage.src = mainImage.src;
             imageModal.classList.add('active');
-            resetZoom();
+            isZoomed = false;
+            modalImage.style.transform = 'scale(1)';
+            modalContent.style.cursor = 'zoom-in';
         });
 
-        // Zoom com duplo clique
-        modalContent.addEventListener('dblclick', function(e) {
-            e.preventDefault();
-            
-            if (scale === 1) {
-                scale = 2;
-                modalContent.classList.add('zoomed');
-                // Centraliza o zoom no ponto clicado
-                const rect = modalImage.getBoundingClientRect();
-                translateX = (window.innerWidth / 2 - e.clientX) * 2;
-                translateY = (window.innerHeight / 2 - e.clientY) * 2;
-            } else {
-                resetZoom();
+        // Zoom simples
+        modalContent.addEventListener('click', function(e) {
+            if (e.target === modalImage) {
+                isZoomed = !isZoomed;
+                if (isZoomed) {
+                    modalImage.style.transform = 'scale(2)';
+                    modalContent.style.cursor = 'zoom-out';
+                } else {
+                    modalImage.style.transform = 'scale(1)';
+                    modalContent.style.cursor = 'zoom-in';
+                }
             }
-            
-            updateTransform();
-        });
-
-        // Arrastar imagem
-        modalContent.addEventListener('mousedown', function(e) {
-            if (scale > 1) {
-                isDragging = true;
-                startX = e.clientX - translateX;
-                startY = e.clientY - translateY;
-                modalContent.style.cursor = 'grabbing';
-            }
-        });
-
-        window.addEventListener('mousemove', function(e) {
-            if (isDragging && scale > 1) {
-                translateX = e.clientX - startX;
-                translateY = e.clientY - startY;
-                updateTransform();
-            }
-        });
-
-        window.addEventListener('mouseup', function() {
-            isDragging = false;
-            modalContent.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
         });
 
         // Navegação entre imagens
@@ -143,22 +73,27 @@ window.addEventListener('load', function() {
             modalPrevBtn.addEventListener('click', function() {
                 currentImageIndex = (currentImageIndex - 1 + thumbnails.length) % thumbnails.length;
                 modalImage.src = imageUrls[currentImageIndex];
-                resetZoom();
+                isZoomed = false;
+                modalImage.style.transform = 'scale(1)';
+                modalContent.style.cursor = 'zoom-in';
                 updateMainImage(currentImageIndex);
             });
 
             modalNextBtn.addEventListener('click', function() {
                 currentImageIndex = (currentImageIndex + 1) % thumbnails.length;
                 modalImage.src = imageUrls[currentImageIndex];
-                resetZoom();
+                isZoomed = false;
+                modalImage.style.transform = 'scale(1)';
+                modalContent.style.cursor = 'zoom-in';
                 updateMainImage(currentImageIndex);
             });
         }
 
-        // Fechar modal
+        // Fecha modal
         closeModal.addEventListener('click', function() {
             imageModal.classList.remove('active');
-            resetZoom();
+            isZoomed = false;
+            modalImage.style.transform = 'scale(1)';
         });
     }
 
@@ -172,12 +107,9 @@ window.addEventListener('load', function() {
         // Abrir modal de cotação
         quotationButton.addEventListener('click', function(e) {
             e.preventDefault();
-            
-            // Atualiza informações do produto
             document.getElementById('quotationProductImage').src = mainImage.src;
             document.getElementById('quotationProductName').textContent = document.querySelector('h1').textContent;
             document.getElementById('quotationProductCategory').textContent = document.querySelector('.produto-categoria').textContent;
-            
             quotationModal.classList.add('active');
         });
 
@@ -219,7 +151,7 @@ window.addEventListener('load', function() {
             }
         });
 
-        // Fechar modal de cotação
+        // Fechar cotação
         if (closeQuotationForm) {
             closeQuotationForm.addEventListener('click', function() {
                 quotationModal.classList.remove('active');
@@ -228,20 +160,22 @@ window.addEventListener('load', function() {
     }
 
     // === EVENTOS GLOBAIS ===
-    // Fechar modais com ESC
+    // Fechar com ESC
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             imageModal?.classList.remove('active');
             quotationModal?.classList.remove('active');
-            resetZoom();
+            isZoomed = false;
+            modalImage.style.transform = 'scale(1)';
         }
     });
 
-    // Fechar modais clicando fora
+    // Fechar clicando fora
     window.addEventListener('click', function(e) {
         if (e.target === imageModal) {
             imageModal.classList.remove('active');
-            resetZoom();
+            isZoomed = false;
+            modalImage.style.transform = 'scale(1)';
         }
         if (e.target === quotationModal) {
             quotationModal.classList.remove('active');
