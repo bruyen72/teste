@@ -157,37 +157,51 @@ window.addEventListener('load', function() {
         // Envio do formulário
         quotationForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // Mostra loading
             const submitButton = quotationForm.querySelector('button[type="submit"]');
-            const originalText = submitButton.innerHTML;
-
+            const originalButtonText = submitButton.innerHTML;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            submitButton.disabled = true;
+        
             try {
-                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
-                submitButton.disabled = true;
-
-                const formData = new FormData(quotationForm);
+                const formData = new FormData();
+                
+                // Adiciona os campos manualmente
+                formData.append('name', document.getElementById('name').value);
+                formData.append('email', document.getElementById('email').value);
+                formData.append('phone', document.getElementById('phone').value);
+                formData.append('company', document.getElementById('company').value);
+                formData.append('message', document.getElementById('message').value);
                 formData.append('product_name', document.querySelector('h1').textContent);
                 formData.append('product_category', document.querySelector('.produto-categoria').textContent);
                 formData.append('product_image_url', mainImage.src.split('/').pop());
-
+                formData.append('quantity', document.getElementById('quantity').value);
+        
+                // Adiciona logs para debug
+                console.log('Enviando dados:', Object.fromEntries(formData));
+        
                 const response = await fetch('/enviar-cotacao', {
                     method: 'POST',
                     body: formData
                 });
-
+        
+                console.log('Status da resposta:', response.status);
                 const data = await response.json();
-
+                console.log('Resposta:', data);
+        
                 if (response.ok) {
-                    alert('Cotação enviada com sucesso! Em breve entraremos em contato.');
+                    alert('Cotação enviada com sucesso! Você receberá um email de confirmação em breve.');
                     quotationForm.reset();
                     quotationModal.classList.remove('active');
                 } else {
                     throw new Error(data.error || 'Erro ao enviar cotação');
                 }
             } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro ao enviar cotação. Por favor, tente novamente.');
+                console.error('Erro detalhado:', error);
+                alert('Erro ao enviar cotação. Por favor, tente novamente ou entre em contato por telefone.');
             } finally {
-                submitButton.innerHTML = originalText;
+                submitButton.innerHTML = originalButtonText;
                 submitButton.disabled = false;
             }
         });
