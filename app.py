@@ -202,6 +202,7 @@ def produto_detalhe(id):
 @app.route('/enviar-cotacao', methods=['POST'])
 def enviar_cotacao():
     try:
+        # Dados do formulário
         dados = {
             'nome': request.form.get('name', '').strip(),
             'email': request.form.get('email', '').strip(),
@@ -214,67 +215,91 @@ def enviar_cotacao():
             'data': datetime.now().strftime('%d/%m/%Y às %H:%M')
         }
 
-        # Email para a empresa
-        msg = MIMEMultipart()
-        msg['Subject'] = f'Nova Cotação - {dados["produto"]}'
-        msg['From'] = SMTP_USERNAME
-        msg['To'] = SMTP_USERNAME
-        msg.add_header('Reply-To', dados['email'])
+        # Email para a TecPoint
+        msg_tecpoint = MIMEMultipart('alternative')
+        msg_tecpoint['Subject'] = f'Nova Cotação - {dados["produto"]}'
+        msg_tecpoint['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
+        msg_tecpoint['To'] = SMTP_USERNAME
+        msg_tecpoint['Reply-To'] = dados['email']
+        msg_tecpoint['Date'] = formatdate(localtime=True)
 
-        # Email para o cliente
-        msg_cliente = MIMEMultipart()
-        msg_cliente['Subject'] = 'Recebemos sua solicitação - TecPoint'
-        msg_cliente['From'] = SMTP_USERNAME
+        # Email para o Cliente
+        msg_cliente = MIMEMultipart('alternative')
+        msg_cliente['Subject'] = 'Recebemos sua solicitação de cotação - TecPoint'
+        msg_cliente['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
         msg_cliente['To'] = dados['email']
+        msg_cliente['Date'] = formatdate(localtime=True)
 
-        html_content = f"""
+        # Conteúdo do email para TecPoint
+        html_tecpoint = f"""
         <html>
-        <body>
-            <h2>Nova Cotação</h2>
-            <p>Nome: {dados['nome']}<br>
-            Email: {dados['email']}<br>
-            Telefone: {dados['telefone']}<br>
-            Empresa: {dados['empresa']}</p>
-            <p>Produto: {dados['produto']}<br>
-            Categoria: {dados['categoria']}<br>
-            Quantidade: {dados['quantidade']}</p>
-            <p>Mensagem:<br>{dados['mensagem']}</p>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="color: #00A859;">Nova Solicitação de Cotação</h2>
+            
+            <h3>Dados do Cliente</h3>
+            <p>
+            <strong>Nome:</strong> {dados['nome']}<br>
+            <strong>Email:</strong> {dados['email']}<br>
+            <strong>Telefone:</strong> {dados['telefone']}<br>
+            <strong>Empresa:</strong> {dados['empresa']}</p>
+
+            <h3>Produto Solicitado</h3>
+            <p>
+            <strong>Produto:</strong> {dados['produto']}<br>
+            <strong>Categoria:</strong> {dados['categoria']}<br>
+            <strong>Quantidade:</strong> {dados['quantidade']}</p>
+
+            <h3>Mensagem</h3>
+            <p>{dados['mensagem'] if dados['mensagem'] else 'Nenhuma mensagem adicional.'}</p>
+
+            <p><em>Solicitação recebida em {dados['data']}</em></p>
         </body>
         </html>
         """
 
+        # Conteúdo do email para o Cliente
         html_cliente = f"""
         <html>
-        <body>
-            <h2>Recebemos sua solicitação</h2>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2 style="color: #00A859;">Recebemos sua solicitação de cotação</h2>
+            
             <p>Olá {dados['nome']},</p>
-            <p>Sua solicitação foi recebida com sucesso.</p>
-            <p>Em breve nossa equipe entrará em contato.</p>
-            <p>Atenciosamente,<br>Equipe TecPoint</p>
+            
+            <p>Recebemos sua solicitação de cotação para o produto:</p>
+            <p>
+            <strong>Produto:</strong> {dados['produto']}<br>
+            <strong>Quantidade:</strong> {dados['quantidade']}
+            </p>
+
+            <p>Em breve nossa equipe entrará em contato com você.</p>
+
+            <p>Atenciosamente,<br>
+            <strong>Equipe TecPoint</strong><br>
+            Tel: (11) 4508-7767<br>
+            www.tecpoint.net.br</p>
         </body>
         </html>
         """
 
-        msg.attach(MIMEText(html_content, 'html'))
-        msg_cliente.attach(MIMEText(html_cliente, 'html'))
+        # Anexar conteúdos HTML
+        msg_tecpoint.attach(MIMEText(html_tecpoint, 'html', 'utf-8'))
+        msg_cliente.attach(MIMEText(html_cliente, 'html', 'utf-8'))
 
-        # Tenta enviar usando STARTTLS
-        with smtplib.SMTP('smtp.uhserver.com', 587) as server:
-            server.starttls()
+        # Enviar os emails
+        with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT) as server:
+            server.ehlo()
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
-            # Envia email para empresa
-            server.send_message(msg)
-            # Tenta enviar para cliente
-            try:
-                server.send_message(msg_cliente)
-            except Exception as e:
-                print(f"Erro ao enviar para cliente: {e}")
+            # Envia para TecPoint
+            server.send_message(msg_tecpoint)
+            # Envia para o cliente
+            server.send_message(msg_cliente)
 
         return jsonify({'message': 'Cotação enviada com sucesso!'}), 200
 
     except Exception as e:
         print(f'Erro ao enviar cotação: {e}')
         return jsonify({'error': 'Ocorreu um erro inesperado'}), 500
+
 def is_valid_email(email):
     """Valida formato básico do email"""
     try:
