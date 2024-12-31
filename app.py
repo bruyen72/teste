@@ -210,57 +210,82 @@ def enviar_cotacao():
        dados = {
            'nome': request.form.get('name', '').strip(),
            'email': request.form.get('email', '').strip(),
-           'telefone': request.form.get('phone', '').strip(),
+           'telefone': request.form.get('phone', '').strip(), 
+           'empresa': request.form.get('company', '').strip(),
            'produto': request.form.get('product_name', '').strip(),
+           'categoria': request.form.get('product_category', '').strip(),
            'quantidade': request.form.get('quantity', '1').strip(),
-           'data': datetime.now().strftime('%d/%m/%Y às %H:%M')
+           'mensagem': request.form.get('message', '').strip(),
+           'data': datetime.now().strftime('%d/%m/%Y %H:%M')
        }
 
-       # Email para TecPoint
+       # Email para a empresa
        msg_empresa = MIMEText(f"""
-Nova cotação recebida
+Nova Cotacao Recebida
 
 Cliente: {dados['nome']}
-Email: {dados['email']}
+Email: {dados['email']} 
 Telefone: {dados['telefone']}
+Empresa: {dados['empresa']}
+
 Produto: {dados['produto']}
+Categoria: {dados['categoria']}
 Quantidade: {dados['quantidade']}
 
-Recebido em: {dados['data']}
-""", 'plain', 'utf-8')
+Mensagem:
+{dados['mensagem']}
 
-       msg_empresa['Subject'] = f'Nova Cotação - {dados["produto"]}'
+Data: {dados['data']}
+""")
+
+       msg_empresa['Subject'] = f"Nova Cotacao - {dados['produto']}"
        msg_empresa['From'] = SMTP_USERNAME
        msg_empresa['To'] = SMTP_USERNAME
        msg_empresa['Date'] = formatdate(localtime=True)
-       msg_empresa.add_header('Reply-To', dados['email'])
 
-       # Email para Cliente
+       # Email para o cliente 
        msg_cliente = MIMEText(f"""
-Ola {dados['nome']},
+TecPoint - Confirmacao de Cotacao
+
+Prezado(a) {dados['nome']},
 
 Recebemos sua solicitacao para o produto {dados['produto']}.
 Em breve nossa equipe entrara em contato.
 
+Detalhes da solicitacao:
+- Produto: {dados['produto']}
+- Categoria: {dados['categoria']} 
+- Quantidade: {dados['quantidade']}
+
 Atenciosamente,
 Equipe TecPoint
-""", 'plain', 'utf-8')
+www.tecpoint.net.br
+Tel: (11) 4508-7767
+""")
 
-       msg_cliente['Subject'] = 'Confirmação - TecPoint'
+       msg_cliente['Subject'] = 'TecPoint - Confirmacao de Cotacao'
        msg_cliente['From'] = SMTP_USERNAME
        msg_cliente['To'] = dados['email']
        msg_cliente['Date'] = formatdate(localtime=True)
 
+       # Enviar emails
        with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+           
+           # Primeiro envia para empresa
            server.send_message(msg_empresa)
-           server.send_message(msg_cliente)
+           
+           # Depois tenta enviar para cliente
+           try:
+               server.send_message(msg_cliente)
+           except:
+               print('Erro ao enviar para cliente')
 
-       return jsonify({'message': 'Cotação enviada com sucesso!'}), 200
+       return jsonify({'message': 'Cotacao enviada com sucesso!'}), 200
 
    except Exception as e:
-       print(f'Erro: {e}')
-       return jsonify({'error': 'Ocorreu um erro'}), 500
+       print(f'Erro ao enviar cotacao: {e}')
+       return jsonify({'error': 'Ocorreu um erro inesperado'}), 500
 
 def is_valid_email(email):
     """Valida formato básico do email"""
