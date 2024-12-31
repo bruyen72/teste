@@ -24,15 +24,10 @@ app = Flask(
 )
 
 # Configuração do diretório de uploads
-UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
-
-# Configuração do diretório de uploads e banco de dados com detecção do ambiente
-if 'RENDER' in os.environ:  # Detecta ambiente Render
-    UPLOAD_FOLDER = '/tmp/uploads'  # Diretório temporário no Render
-    database_path = '/tmp/tecpoint.db'  # Banco de dados temporário
-else:
-    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')  # Diretório local
-    database_path = os.path.join(os.getcwd(), 'tecpoint.db')  # Banco local
+if 'VERCEL' in os.environ:  # Detecta ambiente de produção (Vercel)
+    UPLOAD_FOLDER = '/tmp/uploads'  # Diretório temporário no Vercel
+else:  # Ambiente local
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
 
 # Cria a pasta de uploads se ela não existir
 try:
@@ -40,14 +35,15 @@ try:
 except OSError as e:
     print(f"Erro ao criar o diretório de uploads: {e}")
 
-# Configuração do Flask e SQLAlchemy
+# Configuração do Flask
 app.config.update(
     SECRET_KEY=os.environ.get('SECRET_KEY', os.urandom(24)),  # Chave secreta para sessões
-    SQLALCHEMY_DATABASE_URI=f'sqlite:///{database_path}',  # Banco de dados
-    SQLALCHEMY_TRACK_MODIFICATIONS=False,  # Desabilita notificações de modificação
     UPLOAD_FOLDER=UPLOAD_FOLDER,  # Define o diretório de uploads
     MAX_CONTENT_LENGTH=50 * 1024 * 1024  # Limite de tamanho do upload (50 MB)
 )
+
+# Exibe informações sobre o diretório de uploads (para debug)
+print(f"Diretório de uploads configurado: {UPLOAD_FOLDER}")
 
 # Configurações de Email
 SMTP_SERVER = 'smtps.uhserver.com'
