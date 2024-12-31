@@ -38,12 +38,12 @@ app.config.update(
     MAX_CONTENT_LENGTH=50 * 1024 * 1024  # Limite de tamanho do upload (50 MB)
 )
 # Ajuste o DATABASE_URL para PostgreSQL
-if 'DATABASE_URL' in os.environ:
-    database_url = os.environ['DATABASE_URL']
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://")
-    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-
+if 'RENDER' in os.environ:  # Detecta ambiente Render
+    UPLOAD_FOLDER = '/var/lib/sqlite/uploads'
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    database_path = '/var/lib/sqlite/tecpoint.db'
+else:
+    database_path = os.path.join(os.getcwd(), 'tecpoint.db')
 # Configurações de Email
 SMTP_SERVER = 'smtps.uhserver.com'
 SMTP_PORT = 465
