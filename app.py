@@ -207,68 +207,60 @@ def produto_detalhe(id):
 @app.route('/enviar-cotacao', methods=['POST'])
 def enviar_cotacao():
    try:
-       # Dados básicos
        dados = {
            'nome': request.form.get('name', '').strip(),
-           'email': request.form.get('email', '').strip(), 
+           'email': request.form.get('email', '').strip(),
            'telefone': request.form.get('phone', '').strip(),
-           'empresa': request.form.get('company', 'Não informada').strip(),
            'produto': request.form.get('product_name', '').strip(),
-           'categoria': request.form.get('product_category', '').strip(),
            'quantidade': request.form.get('quantity', '1').strip(),
-           'mensagem': request.form.get('message', '').strip(),
            'data': datetime.now().strftime('%d/%m/%Y às %H:%M')
        }
 
-       # Email simples para empresa
-       msg = MIMEText(f"""
-Nova Cotação Recebida
+       # Email para TecPoint
+       msg_empresa = MIMEText(f"""
+Nova cotação recebida
 
-Dados do Cliente:
-Nome: {dados['nome']}
+Cliente: {dados['nome']}
 Email: {dados['email']}
 Telefone: {dados['telefone']}
-Empresa: {dados['empresa']}
-
 Produto: {dados['produto']}
-Categoria: {dados['categoria']}
 Quantidade: {dados['quantidade']}
 
-Mensagem: {dados['mensagem']}
-
 Recebido em: {dados['data']}
-       """, 'plain', 'utf-8')
+""", 'plain', 'utf-8')
 
-       msg['Subject'] = f'Nova Cotação - {dados["produto"]}'
-       msg['From'] = SMTP_USERNAME
-       msg['To'] = SMTP_USERNAME
+       msg_empresa['Subject'] = f'Nova Cotação - {dados["produto"]}'
+       msg_empresa['From'] = SMTP_USERNAME
+       msg_empresa['To'] = SMTP_USERNAME
+       msg_empresa['Date'] = formatdate(localtime=True)
+       msg_empresa.add_header('Reply-To', dados['email'])
 
-       with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
-           server.login(SMTP_USERNAME, SMTP_PASSWORD)
-           server.send_message(msg)
+       # Email para Cliente
+       msg_cliente = MIMEText(f"""
+Ola {dados['nome']},
 
-           # Enviar confirmação simples para cliente 
-           msg_cliente = MIMEText(f"""
-Olá {dados['nome']},
-
-Recebemos sua solicitação de cotação para o produto {dados['produto']}.
-Em breve nossa equipe entrará em contato.
+Recebemos sua solicitacao para o produto {dados['produto']}.
+Em breve nossa equipe entrara em contato.
 
 Atenciosamente,
 Equipe TecPoint
-           """, 'plain', 'utf-8')
-           
-           msg_cliente['Subject'] = 'Recebemos sua solicitação - TecPoint'
-           msg_cliente['From'] = SMTP_USERNAME
-           msg_cliente['To'] = dados['email']
-           
+""", 'plain', 'utf-8')
+
+       msg_cliente['Subject'] = 'Confirmação - TecPoint'
+       msg_cliente['From'] = SMTP_USERNAME
+       msg_cliente['To'] = dados['email']
+       msg_cliente['Date'] = formatdate(localtime=True)
+
+       with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
+           server.login(SMTP_USERNAME, SMTP_PASSWORD)
+           server.send_message(msg_empresa)
            server.send_message(msg_cliente)
 
        return jsonify({'message': 'Cotação enviada com sucesso!'}), 200
 
    except Exception as e:
-       print(f'Erro ao enviar cotação: {e}')
-       return jsonify({'error': 'Ocorreu um erro inesperado'}), 500
+       print(f'Erro: {e}')
+       return jsonify({'error': 'Ocorreu um erro'}), 500
 
 def is_valid_email(email):
     """Valida formato básico do email"""
