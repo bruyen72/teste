@@ -206,86 +206,51 @@ def produto_detalhe(id):
 
 @app.route('/enviar-cotacao', methods=['POST'])
 def enviar_cotacao():
-   try:
-       dados = {
-           'nome': request.form.get('name', '').strip(),
-           'email': request.form.get('email', '').strip(),
-           'telefone': request.form.get('phone', '').strip(), 
-           'empresa': request.form.get('company', '').strip(),
-           'produto': request.form.get('product_name', '').strip(),
-           'categoria': request.form.get('product_category', '').strip(),
-           'quantidade': request.form.get('quantity', '1').strip(),
-           'mensagem': request.form.get('message', '').strip(),
-           'data': datetime.now().strftime('%d/%m/%Y %H:%M')
-       }
+    try:
+        dados = {
+            'nome': request.form.get('name', '').strip(),
+            'email': request.form.get('email', '').strip(),
+            'produto': request.form.get('product_name', '').strip()
+        }
 
-       # Email para a empresa
-       msg_empresa = MIMEText(f"""
-Nova Cotacao Recebida
+        # Email simplificado sem links ou caracteres especiais
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = 'Confirmacao TecPoint'
+        msg['From'] = formataddr(("TecPoint", SMTP_USERNAME))
+        msg['To'] = dados['email']
+        msg['Date'] = formatdate(localtime=True)
 
-Cliente: {dados['nome']}
-Email: {dados['email']} 
-Telefone: {dados['telefone']}
-Empresa: {dados['empresa']}
+        text = f"""
+Ola {dados['nome']},
 
-Produto: {dados['produto']}
-Categoria: {dados['categoria']}
-Quantidade: {dados['quantidade']}
-
-Mensagem:
-{dados['mensagem']}
-
-Data: {dados['data']}
-""")
-
-       msg_empresa['Subject'] = f"Nova Cotacao - {dados['produto']}"
-       msg_empresa['From'] = SMTP_USERNAME
-       msg_empresa['To'] = SMTP_USERNAME
-       msg_empresa['Date'] = formatdate(localtime=True)
-
-       # Email para o cliente 
-       msg_cliente = MIMEText(f"""
-TecPoint - Confirmacao de Cotacao
-
-Prezado(a) {dados['nome']},
-
+Obrigado pelo interesse.
 Recebemos sua solicitacao para o produto {dados['produto']}.
-Em breve nossa equipe entrara em contato.
 
-Detalhes da solicitacao:
-- Produto: {dados['produto']}
-- Categoria: {dados['categoria']} 
-- Quantidade: {dados['quantidade']}
+Em breve entraremos em contato.
 
 Atenciosamente,
-Equipe TecPoint
-www.tecpoint.net.br
-Tel: (11) 4508-7767
-""")
+TecPoint
+"""
+        msg.attach(MIMEText(text, 'plain'))
 
-       msg_cliente['Subject'] = 'TecPoint - Confirmacao de Cotacao'
-       msg_cliente['From'] = SMTP_USERNAME
-       msg_cliente['To'] = dados['email']
-       msg_cliente['Date'] = formatdate(localtime=True)
+        # Envio com retry
+        for attempt in range(3):
+            try:
+                with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
+                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                    server.send_message(msg)
+                break
+            except Exception as e:
+                if attempt == 2:
+                    raise e
+                time.sleep(2)
 
-       # Enviar emails
-       with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
-           server.login(SMTP_USERNAME, SMTP_PASSWORD)
-           
-           # Primeiro envia para empresa
-           server.send_message(msg_empresa)
-           
-           # Depois tenta enviar para cliente
-           try:
-               server.send_message(msg_cliente)
-           except:
-               print('Erro ao enviar para cliente')
+        return jsonify({'message': 'Sucesso'}), 200
 
-       return jsonify({'message': 'Cotacao enviada com sucesso!'}), 200
-
-   except Exception as e:
-       print(f'Erro ao enviar cotacao: {e}')
-       return jsonify({'error': 'Ocorreu um erro inesperado'}), 500
+    except Exception as e:
+        print(f'Erro: {e}')
+        salvar_erro_log(str(e))  # Salva erro para análise
+        return jsonify({'error': 'Erro temporario'}), 500
 
 def is_valid_email(email):
     """Valida formato básico do email"""
