@@ -17,37 +17,62 @@ from email.utils import formataddr
 from email.utils import formatdate
 
 
+# Inicialização do Flask
 app = Flask(
     __name__,
     static_folder='static',
-    static_url_path=''  # URL raiz para arquivos estáticos
+    static_url_path=''
 )
 
-# Configuração do diretório de uploads
-UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
-
-# Configuração do diretório de uploads e banco de dados com detecção do ambiente
-if 'RENDER' in os.environ:  # Detecta ambiente Render
-    UPLOAD_FOLDER = '/tmp/uploads'  # Diretório temporário no Render
-    database_path = '/tmp/tecpoint.db'  # Banco de dados temporário
+# Configuração do ambiente e diretórios
+if 'RENDER' in os.environ:
+    UPLOAD_FOLDER = '/tmp/uploads'
+    METADATA_FILE = '/tmp/file_metadata.json'
 else:
-    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')  # Diretório local
-    database_path = os.path.join(os.getcwd(), 'tecpoint.db')  # Banco local
+    UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
+    METADATA_FILE = os.path.join(os.getcwd(), 'file_metadata.json')
 
-# Cria a pasta de uploads se ela não existir
+# Criar diretório de uploads
 try:
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 except OSError as e:
-    print(f"Erro ao criar o diretório de uploads: {e}")
+    print(f"Erro ao criar diretório de uploads: {e}")
 
-# Configuração do Flask e SQLAlchemy
+# Configurações básicas do Flask
 app.config.update(
-    SECRET_KEY=os.environ.get('SECRET_KEY', os.urandom(24)),  # Chave secreta para sessões
-    SQLALCHEMY_DATABASE_URI=f'sqlite:///{database_path}',  # Banco de dados
-    SQLALCHEMY_TRACK_MODIFICATIONS=False,  # Desabilita notificações de modificação
-    UPLOAD_FOLDER=UPLOAD_FOLDER,  # Define o diretório de uploads
-    MAX_CONTENT_LENGTH=50 * 1024 * 1024  # Limite de tamanho do upload (50 MB)
+    SECRET_KEY=os.urandom(24),
+    UPLOAD_FOLDER=UPLOAD_FOLDER,
+    MAX_CONTENT_LENGTH=50 * 1024 * 1024  # 50MB
 )
+
+# Funções auxiliares para metadados
+def save_file_metadata(filename, filesize):
+    metadata = load_metadata()
+    metadata[filename] = {
+        'upload_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'size': filesize
+    }
+    
+    try:
+        with open(METADATA_FILE, 'w') as f:
+            json.dump(metadata, f, indent=4)
+    except Exception as e:
+        print(f"Erro ao salvar metadados: {e}")
+
+def load_metadata():
+    try:
+        if os.path.exists(METADATA_FILE):
+            with open(METADATA_FILE, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Erro ao carregar metadados: {e}")
+    return {}
+
+# Extensões permitidas
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'txt'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # Configurações de Email
 SMTP_SERVER = 'smtps.uhserver.com'
