@@ -18,33 +18,63 @@ from email.utils import formatdate
 
 
 # Inicialização do Flask
-app = Flask(
-    __name__,
-    static_folder='static',
-    static_url_path=''
-)
+app = Flask(__name__)
 
-# Configuração do ambiente e diretórios
-if 'RENDER' in os.environ:
-    UPLOAD_FOLDER = '/tmp/uploads'
-    METADATA_FILE = '/tmp/file_metadata.json'
+# Pasta para uploads
+if 'VERCEL' in os.environ:
+    UPLOAD_FOLDER = '/tmp'
 else:
     UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
-    METADATA_FILE = os.path.join(os.getcwd(), 'file_metadata.json')
 
-# Criar diretório de uploads
+# Criar pasta de uploads
 try:
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-except OSError as e:
-    print(f"Erro ao criar diretório de uploads: {e}")
+except Exception as e:
+    print(f"Erro ao criar pasta: {e}")
 
-# Configurações básicas do Flask
+# Configurações básicas
 app.config.update(
-    SECRET_KEY=os.urandom(24),
     UPLOAD_FOLDER=UPLOAD_FOLDER,
     MAX_CONTENT_LENGTH=50 * 1024 * 1024  # 50MB
 )
 
+# Extensões permitidas
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'txt'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Nome de arquivo vazio'}), 400
+    
+    if file and allowed_file(file.filename):
+        try:
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            
+            return jsonify({
+                'message': 'Arquivo enviado com sucesso',
+                'filename': filename
+            }), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    return jsonify({'error': 'Tipo de arquivo não permitido'}), 400
+
+@app.route('/files/<filename>')
+def get_file(filename):
+    try:
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+    except Exception:
+        return jsonify({'error': 'Arquivo não encontrado'}), 404
+    
 # Funções auxiliares para metadados
 def save_file_metadata(filename, filesize):
     metadata = load_metadata()
