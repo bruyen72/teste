@@ -210,47 +210,47 @@ def enviar_cotacao():
         dados = {
             'nome': request.form.get('name', '').strip(),
             'email': request.form.get('email', '').strip(),
-            'produto': request.form.get('product_name', '').strip()
+            'produto': request.form.get('product_name', '').strip(),
+            'data': datetime.now().strftime('%d/%m/%Y %H:%M')
         }
 
-        # Email simplificado sem links ou caracteres especiais
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = 'Confirmacao TecPoint'
-        msg['From'] = formataddr(("TecPoint", SMTP_USERNAME))
-        msg['To'] = dados['email']
-        msg['Date'] = formatdate(localtime=True)
+        # Primeira prioridade: Salvar cotação
+        with open('cotacoes/cotacoes.txt', 'a') as f:
+            f.write(f"""
+========= NOVA COTAÇÃO =========
+Data: {dados['data']}
+Nome: {dados['nome']}
+Email: {dados['email']}
+Produto: {dados['produto']}
+==============================
+""")
 
-        text = f"""
+        # Segunda prioridade: Tentar enviar email
+        try:
+            msg = MIMEText(f"""
 Ola {dados['nome']},
-
-Obrigado pelo interesse.
-Recebemos sua solicitacao para o produto {dados['produto']}.
-
+Recebemos sua solicitacao.
 Em breve entraremos em contato.
+TecPoint""", 'plain')
 
-Atenciosamente,
-TecPoint
-"""
-        msg.attach(MIMEText(text, 'plain'))
+            msg['Subject'] = 'TecPoint'
+            msg['From'] = SMTP_USERNAME
+            msg['To'] = dados['email']
 
-        # Envio com retry
-        for attempt in range(3):
-            try:
-                with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
-                    server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                    server.send_message(msg)
-                break
-            except Exception as e:
-                if attempt == 2:
-                    raise e
-                time.sleep(2)
+            with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
+                server.login(SMTP_USERNAME, SMTP_PASSWORD)
+                server.send_message(msg)
 
-        return jsonify({'message': 'Sucesso'}), 200
+        except Exception as email_error:
+            # Salva erro de email mas não falha a requisição
+            with open('cotacoes/email_errors.txt', 'a') as f:
+                f.write(f"Erro email {dados['email']}: {str(email_error)}\n")
+
+        return jsonify({'message': 'Cotação recebida com sucesso!'}), 200
 
     except Exception as e:
         print(f'Erro: {e}')
-        salvar_erro_log(str(e))  # Salva erro para análise
-        return jsonify({'error': 'Erro temporario'}), 500
+        return jsonify({'error': 'Erro ao processar pedido'}), 500
 
 def is_valid_email(email):
     """Valida formato básico do email"""
