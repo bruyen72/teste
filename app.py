@@ -210,47 +210,59 @@ def enviar_cotacao():
         dados = {
             'nome': request.form.get('name', '').strip(),
             'email': request.form.get('email', '').strip(),
+            'telefone': request.form.get('phone', '').strip(),
             'produto': request.form.get('product_name', '').strip(),
-            'data': datetime.now().strftime('%d/%m/%Y %H:%M')
+            'categoria': request.form.get('product_category', '').strip(),
+            'quantidade': request.form.get('quantity', '1').strip(),
+            'mensagem': request.form.get('message', '').strip(),
+            'data': datetime.now().strftime('%d/%m/%Y às %H:%M')
         }
 
-        # Primeira prioridade: Salvar cotação
-        with open('cotacoes/cotacoes.txt', 'a') as f:
-            f.write(f"""
-========= NOVA COTAÇÃO =========
-Data: {dados['data']}
-Nome: {dados['nome']}
-Email: {dados['email']}
-Produto: {dados['produto']}
-==============================
-""")
+        # Mensagem para a TecPoint
+        msg_empresa = MIMEMultipart('related')
+        msg_empresa['Subject'] = f'Nova Cotação - {dados["produto"]}'
+        msg_empresa['From'] = formataddr(("TecPoint Soluções", SMTP_USERNAME))
+        msg_empresa['To'] = SMTP_USERNAME
+        msg_empresa.add_header('Reply-To', dados['email'])
 
-        # Segunda prioridade: Tentar enviar email
-        try:
-            msg = MIMEText(f"""
-Ola {dados['nome']},
-Recebemos sua solicitacao.
-Em breve entraremos em contato.
-TecPoint""", 'plain')
+        html_empresa = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif;">
+            <h2 style="color: #00A859;">Nova Solicitação de Cotação</h2>
+            <div style="margin: 20px 0;">
+                <h3>Dados do Cliente</h3>
+                <p>
+                <strong>Nome:</strong> {dados['nome']}<br>
+                <strong>Email:</strong> {dados['email']}<br>
+                <strong>Telefone:</strong> {dados['telefone']}</p>
+            </div>
+            <div style="margin: 20px 0;">
+                <h3>Produto Solicitado</h3>
+                <p>
+                <strong>Produto:</strong> {dados['produto']}<br>
+                <strong>Categoria:</strong> {dados['categoria']}<br>
+                <strong>Quantidade:</strong> {dados['quantidade']}</p>
+            </div>
+            <div style="margin: 20px 0;">
+                <h3>Mensagem</h3>
+                <p>{dados['mensagem']}</p>
+            </div>
+            <p style="color: #666; font-style: italic;">Recebido em {dados['data']}</p>
+        </body>
+        </html>
+        """
+        msg_empresa.attach(MIMEText(html_empresa, 'html', 'utf-8'))
 
-            msg['Subject'] = 'TecPoint'
-            msg['From'] = SMTP_USERNAME
-            msg['To'] = dados['email']
+        # Enviar usando SSL/TLS
+        with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg_empresa)
 
-            with smtplib.SMTP_SSL('smtps.uhserver.com', 465) as server:
-                server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                server.send_message(msg)
-
-        except Exception as email_error:
-            # Salva erro de email mas não falha a requisição
-            with open('cotacoes/email_errors.txt', 'a') as f:
-                f.write(f"Erro email {dados['email']}: {str(email_error)}\n")
-
-        return jsonify({'message': 'Cotação recebida com sucesso!'}), 200
+        return jsonify({'message': 'Cotação enviada com sucesso!'}), 200
 
     except Exception as e:
-        print(f'Erro: {e}')
-        return jsonify({'error': 'Erro ao processar pedido'}), 500
+        print(f'Erro ao enviar cotação: {e}')
+        return jsonify({'error': 'Ocorreu um erro inesperado'}), 500
 
 def is_valid_email(email):
     """Valida formato básico do email"""
